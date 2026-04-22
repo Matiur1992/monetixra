@@ -22,11 +22,11 @@ const fetch     = (...a) => import('node-fetch').then(({default:f})=>f(...a));
 const PORT          = process.env.PORT         || 3000;
 const OPENAI_KEY    = process.env.OPENAI_API_KEY   || '';
 const DEEPSEEK_KEY  = process.env.DEEPSEEK_API_KEY || '';
-const SUPABASE_URL  = process.env.SUPABASE_URL     || 'https://rgximkhnhxgaonrxzzxl.supabase.co';
-const SUPABASE_ANON = process.env.SUPABASE_ANON_KEY|| 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJneGlta2huaHhnYW9ucnh6enhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDg3MDQsImV4cCI6MjA5MTIyNDcwNH0.zgBfCTs2AEocLVwjJntg1dDBwy4quQS40QWqeuYRTwU';
-const METERED_KEY   = process.env.METERED_API_KEY  || 'ffb21c8dfcff4bf229f8973e77541a11edc0';
-const GOOGLE_KEY    = process.env.GOOGLE_API_KEY   || 'AIzaSyCCGkyMBXiByuRV8qFfLRAWPrvFNRQOhoI';
-const GOOGLE_VISION = process.env.GOOGLE_VISION_KEY|| 'AIzaSyDIgQr0BfU4-AfWRA2_HFcDhwZZj7ymiUg';
+const SUPABASE_URL  = process.env.SUPABASE_URL     || '';
+const SUPABASE_ANON = process.env.SUPABASE_ANON_KEY|| '';
+const METERED_KEY   = process.env.METERED_API_KEY  || '';
+const GOOGLE_KEY    = process.env.GOOGLE_API_KEY   || '';
+const GOOGLE_VISION = process.env.GOOGLE_VISION_KEY|| '';
 const BKASH_APP_KEY    = process.env.BKASH_APP_KEY    || '';
 const BKASH_APP_SECRET = process.env.BKASH_APP_SECRET || '';
 const BKASH_USERNAME   = process.env.BKASH_USERNAME   || '';
@@ -475,3 +475,47 @@ server.listen(PORT, ()=>{
 });
 
 module.exports={app,server,io};
+
+// ── Stripe Payment ─────────────────────────────────────────
+app.post('/api/payment/stripe/create-session', async(req,res)=>{
+  const STRIPE_SECRET = process.env.STRIPE_SECRET_KEY||'';
+  if(!STRIPE_SECRET) return res.json({demo:true, message:'Stripe not configured'});
+  try {
+    const stripe = require('stripe')(STRIPE_SECRET);
+    const {amount, currency='usd', description, userId} = req.body;
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types:['card'],
+      line_items:[{price_data:{currency,product_data:{name:description||'Monetixra Top-up'},unit_amount:amount},quantity:1}],
+      mode:'payment',
+      success_url: (process.env.BASE_URL||'http://localhost:3000') + '/?stripe=success&uid='+userId,
+      cancel_url:  (process.env.BASE_URL||'http://localhost:3000') + '/?stripe=cancel',
+      metadata:{ userId, description }
+    });
+    res.json({ sessionId: session.id, url: session.url });
+  } catch(e){ res.status(500).json({error:e.message}); }
+});
+
+// Stripe webhook
+app.post('/api/payment/stripe/webhook', express.raw({type:'application/json'}), async(req,res)=>{
+  const STRIPE_SECRET  = process.env.STRIPE_SECRET_KEY||'';
+  const STRIPE_WH_SEC  = process.env.STRIPE_WEBHOOK_SECRET||'';
+  if(!STRIPE_SECRET) return res.json({received:true});
+  try {
+    const stripe = require('stripe')(STRIPE_SECRET);
+    const sig    = req.headers['stripe-signature'];
+    const event  = STRIPE_WH_SEC ? stripe.webhooks.constructEvent(req.body, sig, STRIPE_WH_SEC) : JSON.parse(req.body);
+    if(event.type === 'checkout.session.completed') {
+      const session = event.data.object;
+      const userId  = session.metadata?.userId;
+      const amt     = session.amount_total; // cents
+      console.log(`[Stripe] Payment completed: $${amt/100} by ${userId}`);
+      // Credit points to user in Supabase
+      if(userId && amt) {
+        const points = Math.floor(amt / 100); // 1 point per dollar
+        await supabaseReq('users', 'PATCH', {points_balance:points}, `id=eq.${userId}`);
+        console.log(`[Stripe] Credited ${points} points to ${userId}`);
+      }
+    }
+    res.json({received:true});
+  } catch(e){ res.status(400).send(`Webhook Error: ${e.message}`); }
+});

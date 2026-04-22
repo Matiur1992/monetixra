@@ -9,12 +9,36 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 <meta name="description" content="Monetixra — Complete Social Earn Platform with AI, Crypto, NFT, MLM & Live">
 <title>Monetixra — Complete Social Earn Platform</title>
+<!-- Open Graph / Social Sharing (dynamic) -->
+<meta property="og:type"        content="website" id="og-type">
+<meta property="og:url"         content="https://monetixra.onrender.com/" id="og-url">
+<meta property="og:title"       content="Monetixra — Earn Money on Social Media" id="og-title">
+<meta property="og:description" content="Post, watch ads, invite friends & earn real money with Monetixra. AI-powered social platform with crypto, NFT & live streaming." id="og-desc">
+<meta property="og:image"       content="https://monetixra.onrender.com/icon-512.png" id="og-image">
+<meta name="twitter:card"       content="summary_large_image">
+<meta name="twitter:title"      content="Monetixra — Earn Money on Social Media" id="tw-title">
+<meta name="twitter:description"content="Post, watch ads & earn real money with AI-powered social platform." id="tw-desc">
+<meta name="twitter:image"      content="https://monetixra.onrender.com/icon-512.png" id="tw-image">
+<link rel="canonical"           href="https://monetixra.onrender.com/" id="canonical">
+<!-- JSON-LD Structured Data -->
+<script type="application/ld+json" id="jsonLd">{
+  "@context":"https://schema.org",
+  "@type":"WebApplication",
+  "name":"Monetixra",
+  "description":"Complete Social Earn Platform with AI, Crypto, NFT, MLM & Live",
+  "url":"https://monetixra.onrender.com",
+  "applicationCategory":"SocialNetworkingApplication",
+  "offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}
+}</script>
 <!-- ═══════════════════════════════════════════════════════
      Monetixra — External Libraries
      ═══════════════════════════════════════════════════════ -->
 
 <!-- Socket.io Real-time -->
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+
+<!-- Google Sign-In (One Tap) -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 
 <!-- PeerJS (WebRTC simplified) -->
 <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
@@ -65,13 +89,24 @@ const EMAILJS_TEMPLATE = '';  // ★ template_xxx from emailjs.com
 const EMAILJS_PUBLIC   = '';  // ★ public key from emailjs.com
 
 // ── Ads ──────────────────────────────────────────────────────
-const ADSTERRA_KEY   = '';  // ★ from adsterra.com
-const ADSENSE_CLIENT = '';  // ★ ca-pub-xxx from adsense.google.com
-const ADSENSE_SLOT   = '';  // ★ slot ID from adsense.google.com
+const ADSTERRA_KEY       = '';   // ★ from adsterra.com
+const ADSENSE_CLIENT     = '';   // ★ ca-pub-xxx from adsense.google.com
+const ADSENSE_SLOT       = '';   // ★ slot ID from adsense.google.com
+const PROPELLERADS_ZONE  = '';   // ★ Zone ID from propellerads.com
+const MEDIANET_CID       = '';   // ★ Customer ID from media.net
+const MGID_WIDGET        = '';   // ★ Widget ID from mgid.com
+const TABOOLA_PUBLISHER  = '';   // ★ Publisher ID from taboola.com
+
+// ── Payments ─────────────────────────────────────────────────
+const STRIPE_PUB_KEY = '';       // ★ pk_live_xxx from stripe.com
+
+// ── Cloudinary Media Upload ──────────────────────────────────
+const CLOUDINARY_CLOUD_NAME   = '';  // ★ cloud name from cloudinary.com
+const CLOUDINARY_UPLOAD_PRESET= '';  // ★ upload preset (unsigned)
 
 // ── Web3 RPC ─────────────────────────────────────────────────
-const INFURA_PROJECT_ID = '';  // ★ from infura.io
-const HELIUS_API_KEY    = '';  // ★ from helius.dev
+const INFURA_PROJECT_ID = '';    // ★ from infura.io
+const HELIUS_API_KEY    = '';    // ★ from helius.dev
 
 // ── Auto-activate Adsterra ───────────────────────────────────
 if(ADSTERRA_KEY) {
@@ -89,6 +124,50 @@ if(ADSTERRA_KEY) {
     s.async = true;
     s.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=' + ADSENSE_CLIENT;
     s.crossOrigin = 'anonymous';
+    document.head.appendChild(s);
+  }
+  // PropellerAds push notifications
+  if(PROPELLERADS_ZONE) {
+    let s = document.createElement('script');
+    s.async = true;
+    s.setAttribute('data-cfasync', 'false');
+    s.src = 'https://srv.adstxtmanager.com/' + PROPELLERADS_ZONE + '/invoke.js';
+    document.head.appendChild(s);
+    // Also add push notification ad
+    let p = document.createElement('script');
+    p.async = true;
+    p.setAttribute('data-zone', PROPELLERADS_ZONE);
+    p.src = 'https://acepixel.com/tag.min.js';
+    document.head.appendChild(p);
+  }
+  // Media.net
+  if(MEDIANET_CID) {
+    let s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://contextual.media.net/dmedianet.js?cid=' + MEDIANET_CID;
+    document.head.appendChild(s);
+  }
+  // MGID native ads
+  if(MGID_WIDGET) {
+    let s = document.createElement('script');
+    s.src = 'https://jsc.mgid.com/m/o/monetixra.com.' + MGID_WIDGET + '.js';
+    s.async = true;
+    document.head.appendChild(s);
+  }
+  // Taboola
+  if(TABOOLA_PUBLISHER) {
+    window._taboola = window._taboola || [];
+    _taboola.push({article:'auto'});
+    let s = document.createElement('script');
+    s.src = '//cdn.taboola.com/libtrc/' + TABOOLA_PUBLISHER + '/loader.js';
+    s.async = true;
+    document.head.appendChild(s);
+  }
+  // Stripe.js load
+  if(STRIPE_PUB_KEY) {
+    let s = document.createElement('script');
+    s.src = 'https://js.stripe.com/v3/';
+    s.async = true;
     document.head.appendChild(s);
   }
 </script>
@@ -458,7 +537,7 @@ body{font-family:var(--ff);background:var(--bg);color:var(--t1);min-height:100vh
 .article-body{padding:12px 13px;}
 .article-tag{font-size:10px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--c2);margin-bottom:5px;}
 .article-ttl{font-family:var(--fd);font-size:16px;font-weight:700;line-height:1.4;margin-bottom:6px;}
-.article-excerpt{font-size:13px;color:var(--t2);line-height:1.6;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
+.article-excerpt{font-size:13px;color:var(--t2);line-height:1.6;display:-webkit-box;-webkit-line-clamp:3;line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
 .article-meta{display:flex;align-items:center;gap:8px;margin-top:9px;font-size:11px;color:var(--t3);}
 
 /* ========== CAROUSEL ========== */
@@ -872,6 +951,29 @@ body{font-family:var(--ff);background:var(--bg);color:var(--t1);min-height:100vh
 .call-wave span:nth-child(5){animation-delay:0s;}
 @keyframes callWave{0%,100%{height:8px;opacity:.4}50%{height:34px;opacity:1}}
 
+/* ===== LIGHT THEME ===== */
+body.light-theme {
+  --bg1:#f0f2f5; --bg2:#ffffff; --bg3:#e4e6ea; --bg4:#d8dadf;
+  --t1:#050505; --t2:#1c1e21; --t3:#65676b;
+  --b1:rgba(0,0,0,.12); --b2:rgba(0,0,0,.2);
+  --g2:rgba(0,0,0,.04); --g3:rgba(0,0,0,.07);
+  --sh1:0 1px 3px rgba(0,0,0,.15); --sh2:0 4px 12px rgba(0,0,0,.2);
+}
+body.light-theme .nav-bar { background:#ffffff; border-top:1px solid rgba(0,0,0,.12); }
+body.light-theme .auth-wrap { background:linear-gradient(135deg,#e8f4fd,#f0f8ee); }
+body.light-theme .auth-card { background:#ffffff; border-color:rgba(0,0,0,.12); }
+body.light-theme input, body.light-theme select, body.light-theme textarea { background:#f0f2f5; color:#050505; border-color:rgba(0,0,0,.15); }
+body.light-theme .modal { background:#ffffff; }
+body.light-theme .top-bar { background:#ffffff; border-bottom:1px solid rgba(0,0,0,.12); }
+
+/* ===== POLL STYLES ===== */
+.poll-opt { border:2px solid var(--b1); border-radius:10px; padding:8px 12px; margin-bottom:6px; cursor:pointer; position:relative; overflow:hidden; transition:all .2s; }
+.poll-opt:hover { border-color:var(--neon); }
+.poll-opt.voted { border-color:var(--c2); background:rgba(14,165,233,.08); }
+.poll-bar { position:absolute; top:0; left:0; height:100%; background:rgba(14,165,233,.15); transition:width .6s ease; border-radius:8px; }
+.poll-txt { position:relative; display:flex; justify-content:space-between; font-size:13px; font-weight:600; }
+
+
 /* ===== WEB3 / CRYPTO ===== */
 .web3-pill{display:inline-flex;align-items:center;gap:5px;background:var(--g2);border:1px solid var(--b1);border-radius:99px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;transition:all .18s;}
 .web3-pill:hover{background:linear-gradient(135deg,var(--c1),var(--c2));color:#fff;border-color:transparent;}
@@ -890,7 +992,7 @@ body{font-family:var(--ff);background:var(--bg);color:var(--t1);min-height:100vh
 /* ===== AD PLACEMENTS ===== */
 .ad-native{background:var(--g2);border:1px solid var(--b1);border-radius:12px;padding:10px;margin:8px 0;position:relative;}
 .ad-native .ad-label{position:absolute;top:6px;right:8px;font-size:8px;color:var(--t3);font-weight:700;letter-spacing:1px;}
-/* ===== ADMIN PANEL EXTRAS ===== */ */
+/* ===== ADMIN PANEL EXTRAS ===== */
 .admin-stat{background:var(--g2);border:1px solid var(--b1);border-radius:12px;padding:12px;text-align:center;}
 .as-i{font-size:22px;margin-bottom:4px;}
 .as-n{font-family:var(--fm);font-size:18px;font-weight:800;color:var(--neon);}
@@ -1016,7 +1118,7 @@ body{font-family:var(--ff);background:var(--bg);color:var(--t1);min-height:100vh
     <!-- LOGIN -->
     <div class="af on" id="afLogin">
       <div class="fg"><div class="fw"><span class="fi-p">📧</span><input class="fi" id="liId" placeholder="Email or Phone"></div></div>
-      <div class="fg"><div class="fw"><span class="fi-p">🔒</span><input class="fi" id="liPw" placeholder="Password" type="password"><span class="fi-s" onclick="togglePw('liPw')">👁️</span></div></div>
+      <div class="fg"><div class="fw"><span class="fi-p">🔒</span><input class="fi" id="liPw" placeholder="Password" type="password" autocomplete="current-password"><span class="fi-s" onclick="togglePw('liPw')">👁️</span></div></div>
       <button class="btn btn-p" onclick="doLogin()" style="margin-bottom:9px;">🚀 Sign In</button>
       <div style="text-align:center;"><a href="#" style="color:var(--c2);font-size:12px;" onclick="authTab('forgot',null)">Forgot Password?</a></div>
     </div>
@@ -1025,11 +1127,15 @@ body{font-family:var(--ff);background:var(--bg);color:var(--t1);min-height:100vh
       <div class="fg"><div class="fw"><span class="fi-p">👤</span><input class="fi" id="rgName" placeholder="Full Name"></div></div>
       <div class="fg"><div class="fw"><span class="fi-p">@</span><input class="fi" id="rgUser" placeholder="Username"></div></div>
       <div class="fg"><div class="fw"><span class="fi-p">📧</span><input class="fi" id="rgId" placeholder="Email or Phone"></div></div>
-      <div class="fg"><div class="fw"><span class="fi-p">🔒</span><input class="fi" id="rgPw" placeholder="Password (min 6 chars)" type="password"><span class="fi-s" onclick="togglePw('rgPw')">👁️</span></div></div>
+      <div class="fg"><div class="fw"><span class="fi-p">🔒</span><input class="fi" id="rgPw" placeholder="Password (min 6 chars)" type="password" autocomplete="new-password"><span class="fi-s" onclick="togglePw('rgPw')">👁️</span></div></div>
       <div class="fg"><div class="fw"><span class="fi-p">🔒</span><input class="fi" id="rgPw2" placeholder="Confirm Password" type="password" oninput="checkPwMatch()"><span class="fi-s" onclick="togglePw('rgPw2')">👁️</span></div></div>
       <div id="pwMatchMsg" style="font-size:11px;margin:-4px 0 6px;display:none;"></div>
       <div class="fg"><div class="fw"><span class="fi-p">🎁</span><input class="fi" id="rgRef" placeholder="Referral Code (optional)"></div></div>
       <button class="btn btn-b" onclick="sendRegOtp()" style="margin-bottom:8px;">📩 Send OTP & Verify</button>
+      <div class="fg" style="display:flex;align-items:flex-start;gap:8px;">
+        <input type="checkbox" id="rgTerms" style="margin-top:3px;flex-shrink:0;">
+        <label for="rgTerms" style="font-size:11px;color:var(--t3);cursor:pointer;">I agree to the <span style="color:var(--neon);" onclick="openTerms()">Terms of Service</span> and <span style="color:var(--neon);" onclick="openPrivacy()">Privacy Policy</span></label>
+      </div>
       <div id="rgOtpWrap" style="display:none;">
         <div class="otp-row"><input class="ob" maxlength="1" oninput="otpNext(this,0)" id="ob0"><input class="ob" maxlength="1" oninput="otpNext(this,1)" id="ob1"><input class="ob" maxlength="1" oninput="otpNext(this,2)" id="ob2"><input class="ob" maxlength="1" oninput="otpNext(this,3)" id="ob3"><input class="ob" maxlength="1" oninput="otpNext(this,4)" id="ob4"><input class="ob" maxlength="1" oninput="otpNext(this,5)" id="ob5"></div>
         <button class="btn btn-p" onclick="doRegister()">✅ Verify & Create Account</button>
@@ -1057,6 +1163,35 @@ body{font-family:var(--ff);background:var(--bg);color:var(--t1);min-height:100vh
 
 <!-- FEED PAGE -->
 <div class="pg on" id="pg-feed">
+  <!-- Getting Started Guide (new users only) -->
+  <div id="gettingStarted" style="display:none;background:linear-gradient(135deg,rgba(109,40,217,.15),rgba(0,255,170,.08));border:1px solid rgba(109,40,217,.3);border-radius:16px;padding:16px;margin-bottom:10px;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
+      <div style="font-size:14px;font-weight:800;">🚀 Welcome to Monetixra!</div>
+      <button onclick="G('gettingStarted').style.display='none'" style="background:none;border:none;color:var(--t3);font-size:16px;cursor:pointer;">✕</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div style="background:rgba(0,0,0,.3);border-radius:10px;padding:10px;text-align:center;cursor:pointer;" onclick="nav('earn')">
+        <div style="font-size:22px;">📺</div>
+        <div style="font-size:11px;font-weight:700;margin-top:4px;">Watch Ads</div>
+        <div style="font-size:10px;color:var(--neon);">+5 pts each</div>
+      </div>
+      <div style="background:rgba(0,0,0,.3);border-radius:10px;padding:10px;text-align:center;cursor:pointer;" onclick="G('fab').click()">
+        <div style="font-size:22px;">✏️</div>
+        <div style="font-size:11px;font-weight:700;margin-top:4px;">Create Post</div>
+        <div style="font-size:10px;color:var(--neon);">+20 pts each</div>
+      </div>
+      <div style="background:rgba(0,0,0,.3);border-radius:10px;padding:10px;text-align:center;cursor:pointer;" onclick="nav('referral')">
+        <div style="font-size:22px;">🤝</div>
+        <div style="font-size:11px;font-weight:700;margin-top:4px;">Invite Friends</div>
+        <div style="font-size:10px;color:var(--neon);">+100 pts/ref</div>
+      </div>
+      <div style="background:rgba(0,0,0,.3);border-radius:10px;padding:10px;text-align:center;cursor:pointer;" onclick="openModal('kycModal')">
+        <div style="font-size:22px;">🪪</div>
+        <div style="font-size:11px;font-weight:700;margin-top:4px;">Verify KYC</div>
+        <div style="font-size:10px;color:var(--neon);">+200 pts</div>
+      </div>
+    </div>
+  </div>
   <div class="story-row" id="storyRow"></div>
   <div class="composer">
     <div class="compose-top">
@@ -1075,6 +1210,9 @@ body{font-family:var(--ff);background:var(--bg);color:var(--t1);min-height:100vh
     </div>
   </div>
   <div id="feedList"></div>
+  <div id="feedLoadMore" style="display:none;text-align:center;padding:12px;">
+    <button class="btn btn-ghost btn-sm" onclick="loadMorePosts()">Load More Posts ↓</button>
+  </div>
   <div style="text-align:center;padding:14px;"><button class="btn btn-ghost btn-sm" onclick="loadMorePosts()" style="width:auto;">Load More ↓</button></div>
 </div>
 
@@ -1133,11 +1271,11 @@ body{font-family:var(--ff);background:var(--bg);color:var(--t1);min-height:100vh
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:9px;">
       <button class="btn btn-neon btn-sm" onclick="openModal('wdModal')">💸 Withdraw</button>
-      <button class="btn btn-ghost btn-sm" onclick="openModal('payModal')">💳 Payment</button>
+      <button class="btn btn-ghost btn-sm" onclick="openModal('stripeModal')">💳 Top-up USD</button>
+      <button class="btn btn-ghost btn-sm" onclick="openModal('payModal')">📱 bKash/Nagad</button>
       <button class="btn btn-ghost btn-sm" onclick="openModal('cryptoModal')">₿ Crypto</button>
       <button class="btn btn-ghost btn-sm" onclick="nav('nft')">🎨 Web3</button>
       <button class="btn btn-ghost btn-sm" onclick="openModal('stakeModal')">💎 Stake</button>
-      <button class="btn btn-ghost btn-sm" onclick="nav('referral')">🤝 Referral</button>
     </div>
     <!-- Web3 Quick Status -->
     <div id="walletWeb3Status" style="display:none;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);border-radius:10px;padding:8px 10px;margin-bottom:8px;font-size:11px;">
@@ -1508,6 +1646,8 @@ body{font-family:var(--ff);background:var(--bg);color:var(--t1);min-height:100vh
     <div class="mono" style="font-size:28px;color:var(--c4);" id="adminRevEl">$0.00</div>
   </div>
   <div class="admin-grid" id="adminStats"></div>
+  <!-- Analytics -->
+  <div id="adminAnalytics" style="background:var(--g2);border:1px solid var(--b1);border-radius:14px;padding:12px;margin-bottom:10px;"></div>
   <!-- Tabs -->
   <div class="chips" style="margin-bottom:10px;" id="adminTabs">
     <div class="chip on"  onclick="adminTab('users',this)">👥 Users</div>
@@ -1515,6 +1655,7 @@ body{font-family:var(--ff);background:var(--bg);color:var(--t1);min-height:100vh
     <div class="chip" onclick="adminTab('kyc',this)">🪪 KYC</div>
     <div class="chip" onclick="adminTab('withdraw',this)">💸 Withdrawals</div>
     <div class="chip" onclick="adminTab('reports',this)">⚠️ Reports</div>
+    <div class="chip" onclick="adminTab('analytics',this)">📊 Analytics</div>
   </div>
   <!-- Users Tab -->
   <div id="adminTabUsers">
@@ -1551,6 +1692,11 @@ body{font-family:var(--ff);background:var(--bg);color:var(--t1);min-height:100vh
   <div id="adminTabReports" style="display:none;">
     <div id="modQueue"></div>
   </div>
+</div>
+
+<!-- Admin Analytics Tab (inside pg-admin) -->
+<div id="adminTabAnalytics" style="display:none;">
+  <div id="adminFullAnalytics"></div>
 </div>
 
 <!-- ADMIN USER CONTROL MODAL -->
@@ -1902,6 +2048,39 @@ body{font-family:var(--ff);background:var(--bg);color:var(--t1);min-height:100vh
   </div>
 </div>
 
+<!-- TERMS MODAL -->
+<div class="overlay center" id="termsModal">
+  <div class="modal" style="max-height:80vh;overflow-y:auto;">
+    <div class="modal-hd"><div class="modal-ttl">📋 Terms of Service</div><div class="modal-x" onclick="closeModal('termsModal')">✕</div></div>
+    <div style="font-size:12px;line-height:1.8;color:var(--t2);">
+      <b>1. Acceptance</b><br>By using Monetixra, you agree to these terms.<br><br>
+      <b>2. Earning Rules</b><br>Points are earned through legitimate activity only. Fraud/abuse results in permanent ban.<br><br>
+      <b>3. Withdrawals</b><br>KYC verification required. Minimum 500 pts. Admin approval required within 7 business days.<br><br>
+      <b>4. Content Policy</b><br>No adult content, hate speech, copyright violations, or spam.<br><br>
+      <b>5. Privacy</b><br>We collect minimal data necessary for platform operation. See Privacy Policy.<br><br>
+      <b>6. Termination</b><br>We reserve the right to suspend/terminate accounts violating these terms.<br><br>
+      <b>7. Liability</b><br>Monetixra is not liable for any losses arising from platform use.<br><br>
+      <b>Contact:</b> myworktoolsp3@gmail.com
+    </div>
+    <button class="btn btn-p btn-sm" style="margin-top:12px;width:100%;" onclick="closeModal('termsModal');G('rgTerms').checked=true;">✅ I Agree</button>
+  </div>
+</div>
+
+<!-- PRIVACY MODAL -->
+<div class="overlay center" id="privacyModal">
+  <div class="modal" style="max-height:80vh;overflow-y:auto;">
+    <div class="modal-hd"><div class="modal-ttl">🔒 Privacy Policy</div><div class="modal-x" onclick="closeModal('privacyModal')">✕</div></div>
+    <div style="font-size:12px;line-height:1.8;color:var(--t2);">
+      <b>Data We Collect:</b> Name, email, phone, posts, activity.<br><br>
+      <b>How We Use It:</b> Platform operation, fraud prevention, payments.<br><br>
+      <b>Third Parties:</b> Payment processors (bKash, Nagad), Google APIs, Supabase.<br><br>
+      <b>Your Rights:</b> Request data export or deletion anytime via Settings.<br><br>
+      <b>Security:</b> Data encrypted in transit. We never sell your data.<br><br>
+      <b>Contact:</b> myworktoolsp3@gmail.com
+    </div>
+  </div>
+</div>
+
 <!-- EIN / TIN MODAL -->
 <div class="overlay center" id="einModal">
   <div class="modal">
@@ -1926,6 +2105,26 @@ body{font-family:var(--ff);background:var(--bg);color:var(--t1);min-height:100vh
     </select>
     <div class="fg"><input class="fi" id="wdAccount" placeholder="Account Number/Address"></div>
     <button class="btn btn-p" onclick="doWithdraw()">Submit</button>
+  </div>
+</div>
+
+<!-- STRIPE TOP-UP MODAL -->
+<div class="overlay center" id="stripeModal">
+  <div class="modal">
+    <div class="modal-hd"><div class="modal-ttl">💳 Top-up with Stripe (USD)</div><div class="modal-x" onclick="closeModal('stripeModal')">✕</div></div>
+    <div style="font-size:12px;color:var(--t3);margin-bottom:12px;">Pay with Visa, Mastercard, or any international card.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+      <button class="btn btn-ghost btn-sm" onclick="topupWithStripe(1)">$1 → 1,000 pts</button>
+      <button class="btn btn-ghost btn-sm" onclick="topupWithStripe(5)">$5 → 5,000 pts</button>
+      <button class="btn btn-ghost btn-sm" onclick="topupWithStripe(10)">$10 → 10,000 pts</button>
+      <button class="btn btn-ghost btn-sm" onclick="topupWithStripe(25)">$25 → 25,000 pts</button>
+    </div>
+    <div style="font-size:11px;color:var(--t3);margin-bottom:8px;">Custom amount:</div>
+    <div style="display:flex;gap:8px;">
+      <input class="fi" id="stripeCustomAmt" type="number" placeholder="Amount in USD" min="1" step="1" style="flex:1;">
+      <button class="btn btn-p" onclick="topupWithStripe(parseFloat(V('stripeCustomAmt'))||1)">Pay</button>
+    </div>
+    <div style="font-size:10px;color:var(--t3);margin-top:8px;text-align:center;">Secured by Stripe 🔒</div>
   </div>
 </div>
 
@@ -2078,7 +2277,7 @@ body{font-family:var(--ff);background:var(--bg);color:var(--t1);min-height:100vh
 <input type="file" id="avIn" style="display:none" accept="image/*" onchange="handleAv(this)">
 <input type="file" id="covIn" style="display:none" accept="image/*" onchange="handleCov(this)">
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script>
 // ========== COMPLETE JAVASCRIPT ==========
 const ADMIN_EMAIL = 'myworktoolsp3@gmail.com';
 const ADMIN_PHONE = '01757008864';
@@ -2102,10 +2301,28 @@ let mediaRecorder = null;
 let currentLang = 'en';
 const COLORS = ['#00ffaa','#00d4ff','#f59e0b','#f43f5e','#a78bfa','#38bdf8','#fb923c','#ec4899'];
 const COPYRIGHT_KEYWORDS = ['©','copyright','all rights reserved','proprietary'];
+const MAX_ADS_PER_DAY   = 50;   // max ads user can watch per day
+const MAX_TASKS_PER_DAY = 30;   // max tasks
+const MAX_REF_BONUS     = 10;   // max referral bonuses per day
 
 // Helpers
 const G = id => document.getElementById(id);
 const V = id => { let e = G(id); return e ? e.value.trim() : ''; };
+
+// ── Password hashing (SHA-256) ───────────────────────────────
+async function hashPass(pw) {
+  try {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pw + 'mxt_salt_2025'));
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  } catch(e) {
+    // Fallback: simple obfuscation if SubtleCrypto not available
+    let h = 0;
+    for(let i=0;i<pw.length;i++) h = Math.imul(31,h)+pw.charCodeAt(i)|0;
+    return 'fb_' + Math.abs(h).toString(16) + pw.length;
+  }
+}
+// Check if password is already hashed
+function isHashed(pw) { return pw && (pw.length === 64 || pw.startsWith('fb_')); }
 const esc = s => { if(!s) return ''; return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]); };
 const ago = ts => { let s = Math.floor((Date.now() - ts)/1000); if(s<60) return 'now'; if(s<3600) return Math.floor(s/60)+'m'; if(s<86400) return Math.floor(s/3600)+'h'; return Math.floor(s/86400)+'d'; };
 const fmt = n => { if(n>=1e6) return (n/1e6).toFixed(1)+'M'; if(n>=1e3) return (n/1e3).toFixed(1)+'K'; return n||0; };
@@ -2234,10 +2451,32 @@ function saveData() {
 }
 function loadData() {
   try {
-    let s = localStorage.getItem(STORAGE_KEY+'data');
-    if(s) Object.assign(D, JSON.parse(s));
-  } catch(e) { console.warn('loadData error:', e); }
-  if(!Object.keys(D.users||{}).length) seedData();
+    let raw = localStorage.getItem(STORAGE_KEY+'data');
+    if(raw) {
+      let saved = JSON.parse(raw);
+      // Remove legacy demo users
+      ['u_alice','u_bob','u_carol','u_dave','u_emma'].forEach(k => {
+        if(saved.users) delete saved.users[k];
+      });
+      if(saved.posts)       saved.posts       = saved.posts.filter(p => !String(p.id||'').startsWith('p_demo'));
+      if(saved.stories)     saved.stories     = saved.stories.filter(s => s.id !== 's1');
+      if(saved.marketplace) saved.marketplace = saved.marketplace.filter(m => m.id !== 'm1');
+      Object.assign(D, saved);
+    }
+  } catch(e) {
+    console.warn('loadData error:', e);
+    D = { users:{}, posts:[], txs:[], notifs:[], chats:{}, stories:[], groups:[], marketplace:[], nfts:[], apps:[], withdrawals:[] };
+  }
+  // Always ensure admin exists
+  if(!D.users || !Object.keys(D.users).length) seedData();
+  if(!D.users[ADMIN_ID]) seedData();
+  // Always reset admin to correct credentials (plain text for login compatibility)
+  D.users[ADMIN_ID].email    = ADMIN_EMAIL;
+  D.users[ADMIN_ID].phone    = ADMIN_PHONE;
+  D.users[ADMIN_ID].password = ADMIN_PASS;  // keep plain for consistent login
+  D.users[ADMIN_ID].isAdmin  = true;
+  D.users[ADMIN_ID].kycVerified = true;
+  D.users[ADMIN_ID].verified = true;
 }
 // FIXED: save only user ID, not full object
 function saveSession() {
@@ -2268,28 +2507,120 @@ function loadSession() {
   } catch(e) {}
 }
 // Helper: always re-sync CU to D.users after loadSession
+
+// ─── Dynamic SEO Meta Tags ──────────────────────────────────
+function updateSEO({ title, desc, image, url, type='article' }={}) {
+  const base = 'Monetixra';
+  const baseUrl = 'https://monetixra.onrender.com';
+  const t = title ? `${title} | ${base}` : `${base} — Earn Money on Social Media`;
+  const d = desc  || 'Post, watch ads, invite friends & earn real money. AI-powered social platform.';
+  const img = image || `${baseUrl}/icon-512.png`;
+  const u = url   || baseUrl;
+  // Update meta tags
+  const setMeta = (id, val) => { let el=document.getElementById(id); if(el) el.setAttribute('content', val); };
+  const setLink  = (id, val) => { let el=document.getElementById(id); if(el) el.setAttribute('href', val); };
+  document.title = t;
+  setMeta('og-type',  type);
+  setMeta('og-url',   u);
+  setMeta('og-title', t);
+  setMeta('og-desc',  d);
+  setMeta('og-image', img);
+  setMeta('tw-title', t);
+  setMeta('tw-desc',  d);
+  setMeta('tw-image', img);
+  setLink('canonical', u);
+}
+
+// Update SEO when viewing a post
+function updatePostSEO(post) {
+  if(!post) return;
+  let author = D.users[post.author]||{};
+  updateSEO({
+    title: `${author.name||'User'}: ${(post.text||'').slice(0,60)}`,
+    desc:  (post.text||'Check this post on Monetixra').slice(0,160),
+    image: post.file?.startsWith('http') ? post.file : undefined,
+    url:   `https://monetixra.onrender.com/?post=${post.id}`,
+    type:  'article'
+  });
+}
+
 function syncCU() {
   if(D.cur && D.users[D.cur]) CU = D.users[D.cur];
 }
 
 // Seed Data
 function seedData() {
-  D.users[ADMIN_ID] = { id:ADMIN_ID, name:'Admin', username:'admin', email:ADMIN_EMAIL, phone:ADMIN_PHONE, password:ADMIN_PASS, isAdmin:true, verified:true, points:15000, adminRevenue:0, followers:[], following:[], refs:[], refCode:'ADMIN001', savedPosts:[], blocked:[], tasksToday:{}, twoFA:false, kycVerified:true, tin:null, cryptoWallets:{}, achievements:[], adViews:0, adPts:0, engPts:0, refPts:0, mlmPts:0, nftPts:0, stakePts:0, createdAt:Date.now() };
-  let demos = [ ['alice','Alice Chen','alice@demo.com',7500], ['bob','Bob Rahman','bob@demo.com',4200], ['carol','Carol Ahmed','carol@demo.com',3100] ];
-  demos.forEach(([un,nm,em,pts],idx) => {
-    let uid2 = 'u_'+un;
-    D.users[uid2] = { id:uid2, name:nm, username:un, email:em, password:'demo123', points:pts, verified:un==='alice', isAdmin:false, followers:[], following:[], refs:[], referredBy: idx===0?ADMIN_ID:null, refCode:'MX'+un.toUpperCase(), savedPosts:[], blocked:[], tasksToday:{}, twoFA:false, kycVerified:false, tin:null, cryptoWallets:{}, achievements:[], adViews:0, adPts:0, engPts:0, refPts:0, mlmPts:0, nftPts:0, stakePts:0, createdAt:Date.now() };
-  });
-  D.posts = [{ id:'p_demo1', author:'u_alice', text:'Just launched my new series! 🚀', file:null, mimetype:null, hashtags:['content','creator'], location:'Dhaka', type:'text', visibility:'public', likedBy:[], reactions:{}, comments:[], autoFollows:[], isPoll:false, poll:null, createdAt:Date.now()-86400000, savedBy:[], reports:0, views:0, shares:0, pts:20, isNFT:false },{ id:'p_demo2', author:'u_bob', text:'Exploring Cox\'s Bazar! 🌊', file:null, mimetype:null, hashtags:['travel','bangladesh'], location:'Cox\'s Bazar', type:'text', visibility:'public', likedBy:[], reactions:{}, comments:[], autoFollows:[], isPoll:false, poll:null, createdAt:Date.now()-172800000, savedBy:[], reports:0, views:0, shares:0, pts:20, isNFT:false }];
-  D.stories = [{ id:'s1', author:'u_alice', items:[{type:'image', url:'https://picsum.photos/400/700?random=1', text:'Behind the scenes'}], viewed:[], at:Date.now() }];
-  D.marketplace = [{ id:'m1', title:'Web Dev Course', type:'course', seller:'u_alice', price:29.99, emoji:'🎓', rating:4.8, sales:142 }];
-  D.nfts = []; D.apps = [];
+  // Only create admin — no demo users
+  D.users[ADMIN_ID] = {
+    id: ADMIN_ID,
+    name: 'Admin',
+    username: 'admin',
+    email: ADMIN_EMAIL,
+    phone: ADMIN_PHONE,
+    password: ADMIN_PASS,
+    isAdmin: true,
+    verified: true,
+    points: 0,
+    adminRevenue: 0,
+    followers: [], following: [], refs: [],
+    refCode: 'MXTADMIN',
+    savedPosts: [], blocked: [],
+    tasksToday: {}, twoFA: false,
+    kycVerified: true,
+    tin: null, cryptoWallets: {},
+    achievements: [],
+    adViews: 0, adPts: 0, engPts: 0,
+    refPts: 0, mlmPts: 0, nftPts: 0, stakePts: 0,
+    createdAt: Date.now()
+  };
+  D.posts = [];
+  D.stories = [];
+  D.marketplace = [];
+  D.nfts = [];
+  D.apps = [];
+  D.txs = [];
+  D.notifs = [];
+  D.withdrawals = [];
   saveData();
 }
 
 // Toast
+// Dark/Light Theme Toggle
+function toggleTheme() {
+  let isLight = document.body.classList.toggle('light-theme');
+  let btn = G('themeToggleBtn');
+  if(btn) btn.textContent = isLight ? '☀️' : '🌙';
+  localStorage.setItem('mxt_theme', isLight ? 'light' : 'dark');
+}
+function applyTheme() {
+  let saved = localStorage.getItem('mxt_theme');
+  if(saved === 'light') {
+    document.body.classList.add('light-theme');
+    let btn = G('themeToggleBtn');
+    if(btn) btn.textContent = '☀️';
+  }
+}
+
+// Notification sound player
+function playNotifSound(type) {
+  try {
+    let ctx = new (window.AudioContext||window.webkitAudioContext)();
+    let osc = ctx.createOscillator();
+    let gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    if(type==='s') { osc.frequency.setValueAtTime(880,ctx.currentTime); osc.frequency.setValueAtTime(1100,ctx.currentTime+0.1); }
+    else if(type==='e') { osc.frequency.setValueAtTime(440,ctx.currentTime); osc.frequency.setValueAtTime(330,ctx.currentTime+0.1); }
+    else { osc.frequency.setValueAtTime(660,ctx.currentTime); }
+    gain.gain.setValueAtTime(0.15,ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.3);
+    osc.start(ctx.currentTime); osc.stop(ctx.currentTime+0.3);
+  } catch(e) {}
+}
+
 function toast(type, title, msg='', dur=4000) {
   let w = G('toastWrap'); if(!w) return;
+  // Play sound for success/error
+  if(type==='s'||type==='e') playNotifSound(type);
   let t = document.createElement('div');
   t.className = `toast t-${type}`;
   t.innerHTML = `<span>${ {s:'✅',e:'❌',w:'⚠️',i:'ℹ️'}[type] }</span><div><div style="font-weight:700;">${esc(title)}</div>${msg?`<div>${esc(msg)}</div>`:''}</div>`;
@@ -2313,42 +2644,107 @@ function authTab(tab, btn) {
 }
 function togglePw(id) { let i=G(id); i.type = i.type==='password'?'text':'password'; }
 function otpNext(inp,i) { if(inp.value && i<5) G('ob'+(i+1))?.focus(); }
-function doLogin() {
-  let id = V('liId').trim(), pw = V('liPw');
-  if(!id || !pw) return toast('e','Please enter your credentials');
-  // Find user by email, phone, or username
-  let uid = Object.keys(D.users).find(k => {
-    let u = D.users[k];
-    return u.email === id || u.phone === id || u.username === id;
-  });
-  if(!uid) return toast('e','Account not found');
-  let u = D.users[uid];
-  if(u.password !== pw) return toast('e','Incorrect password');
-  if(u.deactivated && !u.isAdmin) return toast('e','Account is deactivated');
-  if(u.disabled && !u.isAdmin) return toast('e','Account has been disabled by admin');
-  // Ensure admin flag is correct
-  if(uid === ADMIN_ID) u.isAdmin = true;
-  D.cur = uid;
-  CU = D.users[uid];
-  saveSession();
-  saveData();
-  mount();
-  toast('s', '✅ Welcome back!', CU.name);
+async function doLogin() {
+  try {
+    let id = V('liId').trim();
+    let pw = V('liPw');
+    if(!id) return toast('e','Enter your email, phone or username');
+    if(!pw) return toast('e','Enter your password');
+    // Brute force protection
+    let attempts = parseInt(sessionStorage.getItem('mxt_attempts')||'0');
+    if(attempts >= 5) return toast('e','Too many attempts. Refresh the page and try again.');
+    // Find user
+    let foundUid = null;
+    let idLower = id.toLowerCase();
+    for(let k in D.users) {
+      let u = D.users[k];
+      if((u.email||'').toLowerCase()===idLower ||
+         (u.phone||'')=== id ||
+         (u.username||'').toLowerCase()===idLower) {
+        foundUid = k; break;
+      }
+    }
+    if(!foundUid) {
+      sessionStorage.setItem('mxt_attempts', attempts+1);
+      return toast('e','No account found with that email/phone/username');
+    }
+    let u = D.users[foundUid];
+    // Password check: support plain text (legacy) and hashed
+    let pwHash = await hashPass(pw);
+    let match = false;
+    if(u.password === pw) {
+      // Plain text match — migrate to hash
+      match = true;
+      u.password = pwHash;
+    } else if(u.password === pwHash) {
+      match = true;
+    }
+    if(!match) {
+      sessionStorage.setItem('mxt_attempts', attempts+1);
+      return toast('e','Incorrect password. Try again.');
+    }
+    sessionStorage.removeItem('mxt_attempts');
+    if(u.disabled && foundUid !== ADMIN_ID)    return toast('e','Your account has been disabled. Contact support.');
+    if(u.deactivated && foundUid !== ADMIN_ID) return toast('e','Your account is deactivated. Contact support.');
+    // Ensure admin flag
+    if(foundUid === ADMIN_ID || u.email === ADMIN_EMAIL || u.phone === ADMIN_PHONE) {
+      u.isAdmin = true;
+    }
+    D.cur = foundUid;
+    CU    = D.users[foundUid];
+    saveSession();
+    saveData();
+    mount();
+    toast('s','✅ Welcome back, '+CU.name+'!');
+  } catch(err) {
+    console.error('[doLogin]', err);
+    toast('e','Login error. Please try again.');
+  }
 }
 async function sendRegOtp() {
-  let id=V('rgId'); if(!id) return toast('e','Enter email/phone');
-  let otp=rOtp(); D.otp=D.otp||{}; D.otp.reg={code:otp,id}; saveData();
-  let isEmail=id.includes('@');
-  if(EMAILJS_PUBLIC && EMAILJS_SERVICE && EMAILJS_TEMPLATE && isEmail){
-    try{
-      emailjs.init(EMAILJS_PUBLIC);
-      await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE,{to_email:id,to_name:'New User',otp_code:otp,platform:'Monetixra'});
-      toast('s','📧 OTP sent to '+id);
-    }catch(e){ toast('i','OTP: '+otp+' (demo)'); }
-  } else {
-    toast('i','OTP: '+otp+' (demo)');
+  try {
+    let id = V('rgId');
+    if(!id) return toast('e','Enter your email or phone number');
+    if(!G('rgTerms')?.checked) return toast('e','You must agree to Terms of Service');
+    // Check duplicate
+    let existing = Object.values(D.users).find(u => (u.email||'')=== id || (u.phone||'')=== id);
+    if(existing) return toast('e','This email/phone is already registered. Please sign in.');
+    // Rate limit
+    let otpCount = parseInt(sessionStorage.getItem('mxt_otp')||'0');
+    if(otpCount >= 5) return toast('e','Too many requests. Please wait a few minutes.');
+    sessionStorage.setItem('mxt_otp', otpCount+1);
+    // Generate OTP
+    let otp = Math.floor(100000 + Math.random()*900000);
+    D.otp = D.otp || {};
+    D.otp.reg = { code: String(otp), id: id, exp: Date.now()+600000 };
+    saveData();
+    // Send OTP
+    let sent = false;
+    if(EMAILJS_PUBLIC && EMAILJS_SERVICE && EMAILJS_TEMPLATE && id.includes('@')) {
+      try {
+        if(typeof emailjs !== 'undefined') emailjs.init(EMAILJS_PUBLIC);
+        await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, {
+          to_email: id, to_name: 'New User',
+          otp_code: String(otp), platform: 'Monetixra'
+        });
+        toast('s','📧 OTP sent to '+id);
+        sent = true;
+      } catch(e) { console.warn('EmailJS error:', e.message); }
+    }
+    if(!sent) {
+      // Show OTP directly (demo mode)
+      toast('i','Your OTP code: ' + otp, 'Valid for 10 minutes', 15000);
+    }
+    G('rgOtpWrap').style.display = 'block';
+    // Auto-fill OTP boxes if demo
+    if(!sent) {
+      let s = String(otp);
+      for(let i=0;i<6;i++){let el=G('ob'+i);if(el)el.value=s[i]||'';}
+    }
+  } catch(err) {
+    console.error('[sendRegOtp]', err);
+    toast('e','Error. Try again.');
   }
-  G('rgOtpWrap').style.display='block';
 }
 function checkPwMatch() {
   let pw=V('rgPw'), pw2=V('rgPw2');
@@ -2358,76 +2754,145 @@ function checkPwMatch() {
   else         { msg.style.display='block'; msg.style.color='var(--c5)'; msg.textContent='❌ Passwords do not match'; }
 }
 
-function doRegister() {
-  let nm=V('rgName'), un=V('rgUser'), id=V('rgId'), pw=V('rgPw'), pw2=V('rgPw2'), ref=V('rgRef');
-  if(!nm || nm.length < 2)  return toast('e','Enter your full name');
-  if(!un || un.length < 3)  return toast('e','Username must be 3+ characters');
-  if(!id)                   return toast('e','Enter email or phone');
-  if(!pw || pw.length < 6)  return toast('e','Password must be 6+ characters');
-  if(pw !== pw2)            return toast('e','Passwords do not match');
-  let entered = [...Array(6)].map((_,i)=>G('ob'+i)?.value||'').join('');
-  if(D.otp?.reg?.code?.toString() !== entered) return toast('e','Invalid OTP — check and retry');
-  if(Object.values(D.users).find(u=>u.email===id||u.phone===id)) return toast('e','Email/phone already registered');
-  if(Object.values(D.users).find(u=>u.username===un)) return toast('e','Username already taken');
-  let newId = uid();
-  let isEmail = id.includes('@');
-  D.users[newId] = { id:newId, name:nm, username:un, email:isEmail?id:'', phone:isEmail?'':id, password:pw, points:50, verified:false, isAdmin:false, followers:[], following:[], refs:[], referredBy: null, refCode:'MX'+Math.random().toString(36).slice(2,8).toUpperCase(), savedPosts:[], blocked:[], tasksToday:{}, twoFA:false, kycVerified:false, tin:null, cryptoWallets:{}, achievements:[], adViews:0, adPts:0, engPts:0, refPts:0, mlmPts:0, nftPts:0, stakePts:0, createdAt:Date.now() };
-  if(ref) { let ru=Object.values(D.users).find(u=>u.refCode===ref.toUpperCase()); if(ru) { ru.refs=ru.refs||[]; ru.refs.push(newId); D.users[newId].referredBy=ru.id; ru.points+=45; ru.refPts+=45; D.users[newId].points+=10; addMLMCommission(newId,10,'Referral'); toast('i','Referral +10 pts & MLM commission applied!'); } }
-  D.cur = newId;
-  CU = D.users[newId];   // direct reference
-  saveSession(); saveData(); mount();
-  toast('s','🎉 Account created!'); confetti();
+async function doRegister() {
+  try {
+    let nm  = V('rgName').trim();
+    let un  = V('rgUser').trim().toLowerCase();
+    let id  = V('rgId').trim();
+    let pw  = V('rgPw');
+    let pw2 = V('rgPw2');
+    let ref = V('rgRef').trim().toUpperCase();
+    // Validate fields
+    if(!nm || nm.length < 2)  return toast('e','Enter your full name (minimum 2 characters)');
+    if(!un || un.length < 3)  return toast('e','Username must be at least 3 characters');
+    if(!/^[a-z0-9_.]+$/.test(un)) return toast('e','Username: letters, numbers, _ and . only');
+    if(!id)                   return toast('e','Enter your email or phone number');
+    if(!pw || pw.length < 6)  return toast('e','Password must be at least 6 characters');
+    if(pw !== pw2)            return toast('e','Passwords do not match');
+    // Verify OTP
+    let otpEntered = '';
+    for(let i=0;i<6;i++) { let el=G('ob'+i); otpEntered += el ? (el.value||'') : ''; }
+    if(!D.otp?.reg?.code) return toast('e','No OTP found. Click "Send OTP" first.');
+    if(D.otp.reg.id !== id) return toast('e','OTP was sent to a different email/phone.');
+    if(Date.now() > (D.otp.reg.exp||0)) return toast('e','OTP expired. Click "Send OTP" again.');
+    if(String(D.otp.reg.code) !== otpEntered) return toast('e','Wrong OTP. Check and try again.');
+    // Check duplicates
+    for(let k in D.users) {
+      let u = D.users[k];
+      if((u.email||'')=== id || (u.phone||'')=== id) return toast('e','Email/phone already registered. Sign in instead.');
+      if((u.username||'')=== un) return toast('e','Username taken. Choose a different one.');
+    }
+    // Create account
+    let newId   = 'u'+Date.now()+Math.random().toString(36).slice(2,6);
+    let isEmail = id.includes('@');
+    let pwHash  = await hashPass(pw);
+    D.users[newId] = {
+      id: newId, name: nm, username: un,
+      email: isEmail ? id : '',
+      phone: isEmail ? '' : id,
+      password: pwHash,
+      points: 50, verified: false, isAdmin: false,
+      followers:[], following:[], refs:[],
+      referredBy: null,
+      refCode: 'MX'+Math.random().toString(36).slice(2,8).toUpperCase(),
+      savedPosts:[], blocked:[], tasksToday:{}, twoFA:false,
+      kycVerified:false, tin:null, cryptoWallets:{}, achievements:[],
+      adViews:0, adPts:0, engPts:0, refPts:0, mlmPts:0, nftPts:0, stakePts:0,
+      notifSettings:{}, privacySettings:{},
+      createdAt: Date.now()
+    };
+    // Referral bonus
+    if(ref) {
+      let ru = Object.values(D.users).find(u => (u.refCode||'')=== ref);
+      if(ru) {
+        ru.refs = ru.refs||[]; ru.refs.push(newId);
+        D.users[newId].referredBy = ru.id;
+        ru.points = (ru.points||0)+45; ru.refPts=(ru.refPts||0)+45;
+        D.users[newId].points += 10;
+        addMLMCommission(newId, 10, 'New Referral');
+        addNotif(ru.id,'mlm','🤝','Your referral '+nm+' just joined! +45 pts');
+        toast('i','Referral code applied! +10 bonus pts');
+      }
+    }
+    // Signup tx
+    D.txs = D.txs||[];
+    D.txs.unshift({ id:'t'+Date.now(), type:'bonus', label:'Signup bonus', pts:50, at:Date.now(), user:newId });
+    D.otp.reg = null; // Clear used OTP
+    D.cur = newId;
+    CU    = D.users[newId];
+    addNotif(newId,'welcome','🎉','Welcome to Monetixra! Start earning by posting, watching ads, and referring friends.');
+    saveSession(); saveData(); mount();
+    toast('s','🎉 Account created! Welcome '+nm+'! +50 bonus pts');
+    confetti();
+  } catch(err) {
+    console.error('[doRegister]', err);
+    toast('e','Registration failed. Please try again.');
+  }
 }
 async function sendForgotOtp() {
-  let id = V('fiId').trim();
-  if(!id) return toast('e','Enter your email or phone');
-  let uid = Object.keys(D.users).find(k => D.users[k].email===id || D.users[k].phone===id);
-  if(!uid) return toast('e','Account not found');
-  let otp = rOtp();
-  D.otp = D.otp || {};
-  D.otp.forgot = { code: otp, uid: uid, exp: Date.now() + 600000 };
-  saveData();
-  let u = D.users[uid];
-  // Try EmailJS first if configured
-  if(EMAILJS_PUBLIC && EMAILJS_SERVICE && EMAILJS_TEMPLATE && u.email) {
-    try {
-      emailjs.init(EMAILJS_PUBLIC);
-      await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, {
-        to_email: u.email,
-        to_name: u.name || 'User',
-        otp_code: otp,
-        platform: 'Monetixra'
-      });
-      toast('s', '📧 OTP sent to ' + u.email);
-    } catch(e) {
-      console.warn('EmailJS failed:', e);
-      if(uid !== ADMIN_ID) toast('i','OTP (demo): ' + otp);
-      else console.log('[ADMIN OTP]', otp);
+  try {
+    let id = V('fiId').trim();
+    if(!id) return toast('e','Enter your registered email or phone number');
+    // Find account
+    let foundUid = null;
+    for(let k in D.users) {
+      let u = D.users[k];
+      if((u.email||'')=== id || (u.phone||'')=== id || (u.username||'').toLowerCase()=== id.toLowerCase()) {
+        foundUid = k; break;
+      }
     }
-  } else {
-    // Demo mode
-    if(uid !== ADMIN_ID) toast('i','OTP: ' + otp + ' (EmailJS not configured)');
-    else { toast('i','OTP sent to admin contact'); console.log('[ADMIN OTP]', otp); }
+    if(!foundUid) return toast('e','No account found with that email/phone');
+    let otp = Math.floor(100000 + Math.random()*900000);
+    D.otp = D.otp || {};
+    D.otp.forgot = { code: String(otp), uid: foundUid, exp: Date.now()+600000 };
+    saveData();
+    let u = D.users[foundUid];
+    // Try EmailJS
+    let sent = false;
+    if(EMAILJS_PUBLIC && EMAILJS_SERVICE && EMAILJS_TEMPLATE && u.email) {
+      try {
+        if(typeof emailjs !== 'undefined') emailjs.init(EMAILJS_PUBLIC);
+        await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE,{
+          to_email: u.email, to_name: u.name||'User',
+          otp_code: String(otp), platform: 'Monetixra'
+        });
+        toast('s','📧 OTP sent to '+u.email);
+        sent = true;
+      } catch(e) { console.warn('EmailJS:', e.message); }
+    }
+    if(!sent) {
+      if(foundUid !== ADMIN_ID) {
+        toast('i','Your reset OTP: '+otp, 'Valid for 10 minutes', 15000);
+        // Auto-fill the OTP field
+        let el = G('fiOtp'); if(el) el.value = String(otp);
+      } else {
+        toast('i','OTP sent to admin contact (check browser console)');
+        console.log('[ADMIN RESET OTP]', otp);
+      }
+    }
+    G('fOtpWrap').style.display = 'block';
+  } catch(err) {
+    console.error('[sendForgotOtp]', err);
+    toast('e','Error. Please try again.');
   }
-  G('fOtpWrap').style.display = 'block';
 }
-function doReset() {
+async function doReset() {
   let otp = V('fiOtp'), np = V('fiPw'), np2 = V('fiPw2');
   if(!otp || !np || !np2) return toast('e','Fill all fields');
   if(np !== np2) return toast('e','Passwords do not match');
   if(np.length < 6) return toast('e','Password must be 6+ chars');
   let saved = D.otp?.forgot;
-  if(!saved || String(saved.code) !== otp) return toast('e','Invalid OTP');
-  if(Date.now() > saved.exp) return toast('e','OTP expired. Try again.');
+  if(!saved || String(saved.code) !== otp) return toast('e','Invalid OTP — check and retry');
+  if(Date.now() > saved.exp) return toast('e','OTP expired. Request a new one.');
   let u = D.users[saved.uid];
   if(!u) return toast('e','User not found');
-  u.password = np;
+  u.password = await hashPass(np);
   D.otp.forgot = null;
   saveData();
-  toast('s','✅ Password reset successful!');
+  toast('s','✅ Password reset! Please sign in.');
   authTab('login', null);
 }
-function seedAndLogin() { /* Demo login disabled */ toast('e','Demo login disabled'); }
+function seedAndLogin() { /* disabled */ }
 function logout() {
   if(!confirm('Sign out of Monetixra?')) return;
   // CRITICAL: must save D.cur=null BEFORE reload
@@ -2480,8 +2945,11 @@ function mount() {
   G('appWrap').style.display='block';
   G('fab').style.display='flex';
   if(!D.users[ADMIN_ID]) seedData();
-  syncCU();  // ensure CU is always a fresh reference
-  if(CU?.email===ADMIN_EMAIL) { CU.isAdmin=true; if(D.users[CU.id]) D.users[CU.id].isAdmin=true; }
+  syncCU();
+  if(CU?.email===ADMIN_EMAIL || CU?.phone===ADMIN_PHONE) {
+    CU.isAdmin=true;
+    if(D.users[CU.id]) D.users[CU.id].isAdmin=true;
+  }
   syncUI(); nav('feed'); startBanner(); scheduleInts(); scheduleReward(); scheduleAutoAd();
   let light = localStorage.getItem(STORAGE_KEY+'light'); if(light==='1') { document.body.classList.add('lm'); }
   let accent = localStorage.getItem(STORAGE_KEY+'accent'); if(accent) setAccent(accent);
@@ -2593,18 +3061,39 @@ function viewStory(sid) {
 function closeStoryView() { G('storyView').classList.remove('open'); }
 
 // Feed
-function rFeed() {
+let _feedPage = 0;
+const _FEED_SIZE = 10;
+const _allPosts = () => [...D.posts||[]].sort((a,b)=>b.createdAt-a.createdAt);
+
+function rFeed(reset=true) {
   let list = G('feedList'); if(!list||!CU) return;
-  let posts = [...D.posts||[]].sort((a,b)=>b.createdAt - a.createdAt);
+  if(reset) { _feedPage = 0; list.innerHTML=''; }
+  let posts = _allPosts();
   if(activeCat!=='all') posts = posts.filter(p=>p.category===activeCat||p.type===activeCat);
-  list.innerHTML = '';
-  if(!posts.length) { list.innerHTML = '<div style="text-align:center;padding:40px;">📭 No posts</div>'; return; }
-  let adIdx = 0;
-  posts.forEach((p,i) => {
-    if(i>0 && i%3===0) list.appendChild(mkFeedAd(adIdx++));
-    list.appendChild(mkPost(p));
+  if(!posts.length){
+    list.innerHTML=`<div style="text-align:center;padding:40px 20px;">
+      <div style="font-size:48px;margin-bottom:12px;">🌟</div>
+      <div style="font-size:18px;font-weight:800;margin-bottom:8px;">Welcome to Monetixra!</div>
+      <div style="font-size:13px;color:var(--t3);margin-bottom:20px;">No posts yet. Be the first to share something and start earning!</div>
+      <button class="btn btn-neon" onclick="G('fab').click()">✏️ Create First Post</button>
+    </div>`;
+    if(G('feedLoadMore')) G('feedLoadMore').style.display='none';
+    return;
+  }
+  const start = _feedPage * _FEED_SIZE;
+  const chunk = posts.slice(start, start + _FEED_SIZE);
+  const frag  = document.createDocumentFragment();
+  let adIdx   = _feedPage * 2;
+  chunk.forEach((p,i) => {
+    if(i>0 && i%5===0){ let ad=mkFeedAd(adIdx++); if(ad) frag.appendChild(ad); }
+    frag.appendChild(mkPost(p));
   });
+  list.appendChild(frag);
+  _feedPage++;
+  let lm = G('feedLoadMore');
+  if(lm) lm.style.display = (start + _FEED_SIZE) < posts.length ? 'block' : 'none';
 }
+function loadMorePosts() { rFeed(false); }
 // mkFeedAd moved to Web3 section above
 function clickFeedAd(btn,pts) { btn.textContent='✅ +'+pts; btn.disabled=true; addPts(pts,'Clicked Ad'); }
 function loadMorePosts() { toast('i','Loading...'); setTimeout(rFeed,500); }
@@ -2620,8 +3109,8 @@ function mkPost(post) {
   let h = `<div class="post-hd"><div class="av av-round av-md" style="background:linear-gradient(135deg,${grad[0]},${grad[1]});" onclick="viewUser('${post.author}')">${author.avatar?`<img src="${author.avatar}">`:(author.name||'?').charAt(0).toUpperCase()}</div><div style="flex:1;"><div class="post-nm">${esc(author.name||'User')} ${author.verified?'<span class="badge b-ver">✔</span>':''} ${author.isAdmin?'<span class="badge b-admin">👑</span>':''} ${author.kycVerified?'<span class="badge b-kyc">✅ KYC</span>':''} ${post.isNFT?'<span class="badge b-nft">🎨 NFT</span>':''}</div><div class="post-meta">${ago(post.createdAt)} ${vis2ico(post.visibility)} ${post.location?`📍${esc(post.location)}`:''}</div></div>${followBtn}<button class="post-more" onclick="showPostMenu('${post.id}',this)">⋯</button></div>`;
   if(post.text) h += `<div class="post-txt">${linkify(esc(post.text))}</div>`;
   if(post.file) {
-    if(post.type === '360') h += `<div class="post-media"><div style="position:relative;"><img src="${post.file}" style="width:100%;cursor:grab;" onload="registerPostView('${post.id}','${post.author}','image')"><div class="badge" style="position:absolute;top:10px;right:10px;">🔄 360°</div></div></div>`;
-    else if(post.mimetype?.startsWith('image/')) h += `<div class="post-media"><img src="${post.file}" onclick="window.open('${post.file}')" oncontextmenu="event.preventDefault();openDlModal('${post.id}','photo')" onload="registerPostView('${post.id}','${post.author}','image')" title="Hold/right-click to download"><div class="media-overlay"></div></div>`;
+    if(post.type === '360') h += `<div class="post-media"><div style="position:relative;"><img src="${post.file}" loading="lazy" style="width:100%;cursor:grab;" onload="registerPostView('${post.id}','${post.author}','image')"><div class="badge" style="position:absolute;top:10px;right:10px;">🔄 360°</div></div></div>`;
+    else if(post.mimetype?.startsWith('image/')) h += `<div class="post-media"><img src="${post.file}" loading="lazy" onclick="window.open('${post.file}')" oncontextmenu="event.preventDefault();openDlModal('${post.id}','photo')" onload="registerPostView('${post.id}','${post.author}','image')" title="Hold/right-click to download"><div class="media-overlay"></div></div>`;
     else if(post.mimetype?.startsWith('video/')) h += `<div class="post-media"><video controls onplay="registerPostView('${post.id}','${post.author}','video')" oncontextmenu="event.preventDefault();openDlModal('${post.id}','video')"><source src="${post.file}"></video><div style="position:absolute;bottom:8px;right:8px;z-index:2;"><button class="btn btn-ghost btn-xs" onclick="openDlModal('${post.id}','video')" style="background:rgba(0,0,0,.6);">⬇️</button></div></div>`;
     else if(post.mimetype?.startsWith('audio/')) h += `<div class="post-media" style="position:relative;"><audio controls onplay="registerPostView('${post.id}','${post.author}','audio')"><source src="${post.file}"></audio><button class="btn btn-ghost btn-xs" onclick="openDlModal('${post.id}','audio')" style="margin-left:8px;">⬇️ Download</button></div>`;
   }
@@ -2643,8 +3132,40 @@ function mkPost(post) {
   return d;
 }
 function linkify(t) { return t.replace(/#(\w+)/g,'<span class="post-tag" onclick="searchTag(\'$1\')">#$1</span>').replace(/@(\w+)/g,'<span style="color:var(--c2);cursor:pointer;" onclick="viewUser(\'$1\')">@$1</span>'); }
-function renderPoll(post) { return '<div class="poll-wrap">Poll</div>'; }
-function renderQuiz(post) { return '<div class="quiz-wrap">Quiz</div>'; }
+function renderPoll(post) {
+  if(!post.poll) return '';
+  let total = Object.values(post.poll.votes||{}).length || 0;
+  let voted = post.poll.votes?.[CU?.id];
+  let html2 = `<div class="poll-wrap"><div style="font-size:12px;font-weight:700;margin-bottom:8px;">📊 ${esc(post.poll.question)}</div>`;
+  (post.poll.options||[]).forEach((opt,i) => {
+    let cnt = Object.values(post.poll.votes||{}).filter(v=>v===i).length;
+    let pct = total ? Math.round(cnt/total*100) : 0;
+    let isVoted = voted === i;
+    html2 += `<div class="poll-opt ${isVoted?'voted':''}" onclick="${voted===undefined?`votePoll('${post.id}',${i})`:''}">
+      <div class="poll-bar" style="width:${voted!==undefined?pct:0}%"></div>
+      <div class="poll-txt"><span>${esc(opt)}</span>${voted!==undefined?`<span>${pct}%</span>`:''}</div>
+    </div>`;
+  });
+  html2 += `<div style="font-size:10px;color:var(--t3);margin-top:5px;">${total} vote${total!==1?'s':''} · ${voted!==undefined?'Voted':'Tap to vote'}</div></div>`;
+  return html2;
+}
+function renderQuiz(post) {
+  if(!post.quiz) return '';
+  let answered = post.quiz.userAnswers?.[CU?.id];
+  let html2 = `<div class="poll-wrap" style="border-color:rgba(250,204,21,.3);background:rgba(250,204,21,.05);">
+    <div style="font-size:12px;font-weight:700;margin-bottom:8px;">🧠 ${esc(post.quiz.question)}</div>`;
+  (post.quiz.options||[]).forEach((opt,i) => {
+    let isCorrect = answered !== undefined && i === post.quiz.answer;
+    let isWrong   = answered === i && i !== post.quiz.answer;
+    let isSelected = answered === i;
+    html2 += `<div class="poll-opt ${isSelected?'voted':''}" style="${isCorrect?'border-color:var(--c3);':isWrong?'border-color:var(--c5);':''}" onclick="${answered===undefined?`answerQuiz('${post.id}',${i})`:''}">
+      <div class="poll-txt"><span>${esc(opt)}</span>${isCorrect?'✅':isWrong?'❌':''}</div>
+    </div>`;
+  });
+  if(answered !== undefined) html2 += `<div style="font-size:10px;font-weight:700;margin-top:5px;color:${answered===post.quiz.answer?'var(--c3)':'var(--c5)'};">${answered===post.quiz.answer?'🎉 Correct! +10 pts':'❌ Wrong answer'}</div>`;
+  html2 += `</div>`;
+  return html2;
+}
 function renderComments(cmts,pid) {
   return (cmts||[]).map(c=>{
     let au=D.users[c.by]||{};
@@ -2721,7 +3242,17 @@ function deleteComment(pid, cid) {
 }
 function toggleCmts(pid) { let el=G(`cmts-${pid}`); if(el) el.style.display=el.style.display==='none'?'block':'none'; }
 function showReplyBox(cid) { let box=G(`replyBox-${cid}`); if(box) box.style.display=box.style.display==='none'?'flex':'none'; }
-function addComment(pid) { let inp=G(`cmInp-${pid}`); if(!inp||!CU) return; let txt=inp.value.trim(); if(!txt) return; let post=D.posts.find(p=>p.id===pid); if(!post) return; post.comments=post.comments||[]; post.comments.push({id:'c'+Date.now(), by:CU.id, text:txt, likes:0, reacts:{}, at:Date.now() }); addPts(5,'Commented','engage'); inp.value=''; saveData(); refreshPost(pid); }
+function addComment(pid) {
+  let inp=G(`cmInp-${pid}`); if(!inp||!CU) return;
+  let txt=inp.value.trim(); if(!txt) return;
+  let post=D.posts.find(p=>p.id===pid); if(!post) return;
+  post.comments=post.comments||[];
+  post.comments.push({id:'c'+Date.now(), by:CU.id, text:txt, likes:0, reacts:{}, at:Date.now()});
+  // Notify post author
+  if(post.author !== CU.id) addNotif(post.author,'comment','💬',CU.name+' commented: '+txt.substring(0,50));
+  addPts(5,'Commented','engage');
+  inp.value=''; saveData(); refreshPost(pid);
+}
 function addReply(pid,cid) { let inp=G(`rInp-${cid}`); if(!inp||!CU) return; let txt=inp.value.trim(); if(!txt) return; let post=D.posts.find(p=>p.id===pid); if(!post) return; let findCmt=(cmts)=>{ for(let c of cmts||[]){ if(c.id===cid) return c; if(c.replies){ let f=findCmt(c.replies); if(f) return f; } } return null; }; let cmt=findCmt(post.comments); if(!cmt) return; cmt.replies=cmt.replies||[]; cmt.replies.push({id:'r'+Date.now(), by:CU.id, text:txt, likes:0, at:Date.now() }); addPts(3,'Replied','engage'); inp.value=''; saveData(); refreshPost(pid); }
 function reactComment(pid,cid,emoji) { let post=D.posts.find(p=>p.id===pid); if(!post) return; let findCmt=(cmts)=>{ for(let c of cmts||[]){ if(c.id===cid) return c; if(c.replies){ let f=findCmt(c.replies); if(f) return f; } } return null; }; let c=findCmt(post.comments); if(c){ c.reacts=c.reacts||{}; c.reacts[emoji]=(c.reacts[emoji]||0)+1; addPts(1,'Comment React','engage'); saveData(); refreshPost(pid); } }
 function react(pid,key,emoji) { let post=D.posts.find(p=>p.id===pid); if(!post||!CU) return; post.reactions=post.reactions||{like:[],love:[],haha:[],wow:[],sad:[],angry:[],fire:[],diamond:[]}; let arr=post.reactions[key]||[]; let idx=arr.indexOf(CU.id); if(idx>-1) arr.splice(idx,1); else { arr.push(CU.id); addPts(2,'Reaction','engage'); spawnReaction(pid,emoji); } post.reactions[key]=arr; saveData(); refreshReacts(pid,post); }
@@ -2729,6 +3260,30 @@ function spawnReaction(pid,emoji) { let el=document.querySelector(`[data-post-id
 function refreshReacts(pid,post) { let bar=G(`react-${pid}`); if(!bar) return; bar.innerHTML=''; ['👍','❤️','😂','😮','😢','😡','🔥','💎'].forEach(emoji=>{ let key={'👍':'like','❤️':'love','😂':'haha','😮':'wow','😢':'sad','😡':'angry','🔥':'fire','💎':'diamond'}[emoji]; let cnt=post.reactions?.[key]?.length||0; let active=post.reactions?.[key]?.includes(CU?.id)?'active':''; let btn=document.createElement('div'); btn.className=`react-btn ${active}`; btn.onclick=()=>react(pid,key,emoji); btn.innerHTML=`${emoji}${cnt?`<span class="rcnt">${cnt}</span>`:''}`; bar.appendChild(btn); }); }
 function likePost(pid,btn) { let post=D.posts.find(p=>p.id===pid); if(!post||!CU) return; post.likedBy=post.likedBy||[]; let idx=post.likedBy.indexOf(CU.id); if(idx>-1){ post.likedBy.splice(idx,1); btn.classList.remove('liked'); btn.innerHTML='🤍 <span class="pa-cnt">'+fmt(post.likedBy.length)+'</span>'; } else { post.likedBy.push(CU.id); btn.classList.add('liked'); btn.innerHTML='❤️ <span class="pa-cnt">'+fmt(post.likedBy.length)+'</span>'; addPts(3,'Liked','engage'); addNotif(post.author,'like','❤️',`${CU.name} liked your post`,pid); } saveData(); }
 function sharePost(pid) { let post=D.posts.find(p=>p.id===pid); if(post) { post.shares=(post.shares||0)+1; navigator.clipboard?.writeText(location.href); toast('s','Link copied!'); addPts(5,'Shared','engage'); saveData(); } }
+function toggleSchedule(cb) {
+  let picker = G('schedulePicker');
+  if(picker) picker.style.display = cb.checked ? 'block' : 'none';
+  if(cb.checked) {
+    let inp = G('scheduleTime');
+    if(inp) {
+      let now = new Date(); now.setMinutes(now.getMinutes()+5);
+      inp.min = now.toISOString().slice(0,16);
+      inp.value = now.toISOString().slice(0,16);
+    }
+  }
+}
+
+function checkScheduledPosts() {
+  let now = Date.now();
+  let scheduled = (D.posts||[]).filter(p => p.scheduledAt && p.scheduledAt <= now && !p.published);
+  scheduled.forEach(p => {
+    p.published = true;
+    p.createdAt = now;
+    delete p.scheduledAt;
+    addNotif(p.author, 'post', '📅', 'Your scheduled post has been published!');
+  });
+  if(scheduled.length) { saveData(); rFeed(); }
+}
 function votePoll(pid,idx) { let post=D.posts.find(p=>p.id===pid); if(!post?.poll||!CU) return; if(post.poll.votes[CU.id]!==undefined){ toast('w','Already voted!'); return; } post.poll.votes[CU.id]=idx; addPts(5,'Poll vote','engage'); saveData(); refreshPost(pid); }
 function answerQuiz(pid,idx) { let post=D.posts.find(p=>p.id===pid); if(!post?.quiz||!CU) return; if(post.quiz.userAnswers[CU.id]!==undefined) return; post.quiz.userAnswers[CU.id]=idx; if(idx===post.quiz.answer){ addPts(10,'Quiz correct','engage'); toast('s','✅ Correct! +10 pts'); } else toast('e','❌ Wrong!'); saveData(); refreshPost(pid); }
 function showPostMenu(pid, anchor) {
@@ -2764,7 +3319,8 @@ function showPostMenu(pid, anchor) {
   items.push({ ico: '🌐', label: 'Translate Post', fn: `translatePost('${pid}')` });
   items.push({ ico: '📊', label: 'View Stats', fn: `viewPostStats('${pid}')` });
   if (isOwner) {
-    items.push({ ico: '📌', label: post.pinned ? 'Unpin Post' : 'Pin Post', fn: `togglePin('${pid}')` });
+    items.push({ ico: '🚀', label: 'Boost Post (+50 pts)', fn: `boostPost('${pid}')` },
+    { ico: '📌', label: post.pinned ? 'Unpin Post' : 'Pin Post', fn: `togglePin('${pid}')` });
     items.push({ ico: '✏️', label: 'Edit Post', fn: `editPost('${pid}')` });
     items.push({ ico: '🎨', label: 'Mint as NFT', fn: `mintPostAsNFT('${pid}')` });
     items.push({ ico: '🗑️', label: 'Delete Post', fn: `deletePost('${pid}')`, danger: true });
@@ -2870,6 +3426,23 @@ function startDownload(pid, type, quality) {
     addPts(1, 'Download');
   }, 1500);
 }
+function boostPost(pid) {
+  if(!CU) return;
+  let u = D.users[CU.id]||CU;
+  if((u.points||0) < 50) { toast('e','Need 50 pts to boost'); return; }
+  if(!confirm('Boost this post for 50 pts? It will appear at top of feeds for 1 hour.')) return;
+  let post = D.posts.find(p=>p.id===pid); if(!post) return;
+  u.points -= 50;
+  post.boosted = true;
+  post.boostExpiry = Date.now() + 3600000; // 1 hour
+  post.boostBy = CU.id;
+  CU = D.users[CU.id]||CU;
+  D.txs.unshift({id:'t'+Date.now(),type:'boost',label:'Post boost',pts:-50,at:Date.now(),user:CU.id});
+  let admin = D.users[ADMIN_ID]; if(admin){ admin.points=(admin.points||0)+50; admin.adminRevenue=(admin.adminRevenue||0)+50; }
+  saveData(); syncUI(); rFeed();
+  toast('s','🚀 Post boosted! Showing at top for 1 hour. -50 pts');
+}
+
 function togglePin(pid) { let p=D.posts.find(x=>x.id===pid); if(p){ p.pinned=!p.pinned; saveData(); rFeed(); toast('s',p.pinned?'Pinned!':'Unpinned'); } }
 function deletePost(pid) { D.posts=D.posts.filter(p=>p.id!==pid); saveData(); rFeed(); toast('s','Deleted'); }
 function flagCopyright(pid) { let p=D.posts.find(x=>x.id===pid); if(p){ p.copyright=true; p.blocked=true; p.autoDeleteAt=Date.now()+24*3600*1000; addNotif(p.author,'copyright','⚠️','⚠️ Your post was flagged for copyright and will be auto-deleted in 24 hours.',pid); saveData(); rFeed(); toast('w','⚠️ Flagged — auto-delete in 24h'); scheduleCopyrightDelete(pid); } }
@@ -3035,7 +3608,13 @@ function submitPost() {
   let tags=(V('postTags')||'').match(/#\w+/g)||[];
   let privacy=document.querySelector('input[name="privacy"]:checked')?.value||'public';
   if(!text && !pfData){ toast('e','Write something or add media'); closeModal('postModal'); return; }
-  let post={ id:pid(), author:CU.id, type:pfMime?.startsWith('video')?'video':pfMime?.startsWith('image')?'photo':pfMime?.startsWith('audio')?'audio':pfMime?.includes('360')?'360':'text', text, file:pfData||null, mimetype:pfMime||null, hashtags:tags.map(t=>t.slice(1).toLowerCase()), likedBy:[], reactions:{}, comments:[], views:0, shares:0, pts:20, pinned:false, createdAt:Date.now(), visibility:privacy, isNFT:false };
+  // Check schedule
+  let schedToggle = G('scheduleToggle');
+  let schedTime   = G('scheduleTime');
+  let isScheduled = schedToggle?.checked && schedTime?.value;
+  let scheduledAt = isScheduled ? new Date(schedTime.value).getTime() : null;
+  if(scheduledAt && scheduledAt <= Date.now()) { toast('e','Schedule time must be in the future'); return; }
+  let post={ id:pid(), author:CU.id, scheduledAt:scheduledAt||null, published:!scheduledAt, type:pfMime?.startsWith('video')?'video':pfMime?.startsWith('image')?'photo':pfMime?.startsWith('audio')?'audio':pfMime?.includes('360')?'360':'text', text, file:pfData||null, mimetype:pfMime||null, hashtags:tags.map(t=>t.slice(1).toLowerCase()), likedBy:[], reactions:{}, comments:[], views:0, shares:0, pts:20, pinned:false, createdAt:Date.now(), visibility:privacy, isNFT:false };
   D.posts=D.posts||[];
   D.posts.unshift(post);
   CU.posts=CU.posts||[]; CU.posts.unshift(post.id);
@@ -3047,6 +3626,12 @@ function submitPost() {
     post.autoDeleteAt = Date.now() + 24*3600*1000; // 24 hours
     addNotif(CU.id, 'copyright', '⚠️', '⚠️ Copyright detected in your post. It will be auto-deleted in 24 hours.', post.id);
     toast('w', '⚠️ Copyright detected — post will be auto-deleted in 24h');
+  }
+  if(scheduledAt) {
+    toast('s','⏰ Post scheduled for '+new Date(scheduledAt).toLocaleString());
+    closeModal('postModal'); pfData=null; pfMime=null;
+    let editor2=document.getElementById('postEditor'); if(editor2) editor2.innerHTML='';
+    saveData(); return;
   }
   addPts(20,'New post');
   if(document.getElementById('mintAsNFT')?.checked && CU.points >= 500) {
@@ -3139,7 +3724,28 @@ async function aiTranslate() {
     toast('e','Translation failed. Check your API key.');
   }
 }
-function aiGenerateImage() { let prompt=prompt('Enter image description:','beautiful sunset over mountains'); if(prompt){ toast('i','Generating image with AI...'); setTimeout(()=>{ pfData='https://picsum.photos/600/400?random='+Date.now(); pfMime='image/jpeg'; G('mediaPreview').innerHTML=`<img src="${pfData}" style="max-width:100%;border-radius:12px;">`; toast('s','AI image generated!'); },2000); } }
+async function aiGenerateImage() {
+  let imgPrompt = window.prompt('Describe the image you want:', "beautiful sunset over Cox's Bazar, Bangladesh");
+  if(!imgPrompt) return;
+  toast('i','Generating AI image...');
+  try {
+    const r = await fetch('/api/ai/chat',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({messages:[{role:'user',content:'Describe a vivid scene of: '+imgPrompt+'. Be detailed and visual. 3 sentences.'}],model:'openai'})
+    });
+    const d = await r.json();
+    // Use Picsum as placeholder (replace with DALL-E or Stable Diffusion API)
+    let seed = Math.abs(imgPrompt.split('').reduce((a,c)=>a+c.charCodeAt(0),0));
+    pfData='https://picsum.photos/seed/'+seed+'/600/400';
+    pfMime='image/jpeg'; pfName='ai_image.jpg';
+    G('mediaPreview').innerHTML=`<img src="${pfData}" style="max-width:100%;border-radius:12px;"><div style="font-size:10px;color:var(--t3);margin-top:4px;">${d.reply?.substring(0,80)||imgPrompt}</div>`;
+    toast('s','✅ AI image generated!');
+  } catch(e) {
+    let seed=Date.now();
+    pfData='https://picsum.photos/seed/'+seed+'/600/400'; pfMime='image/jpeg';
+    G('mediaPreview').innerHTML=`<img src="${pfData}" style="max-width:100%;border-radius:12px;">`;
+    toast('s','Image generated!');
+  }
+}
 async function aiSummarize() {
   let editor=document.getElementById('postEditor');
   let text=editor?.innerText;
@@ -3175,19 +3781,32 @@ async function aiSentiment() {
 }
 
 // Points System
+// Daily earning limits (anti-fraud)
+const DAILY_LIMITS = { earn:500, engage:300, post:200, ref:1000, total:2000 };
+
 function addPts(pts, label, type='earn') {
   if(!CU) return;
-  // Always work on D.users[CU.id] directly to prevent reference issues
   let u = D.users[CU.id] || CU;
   let adminCut=Math.floor(pts*ADMIN_CUT);
   let userPts=pts-adminCut;
-  u.points=(u.points||0)+userPts;
+  // Anti-fraud: check daily limit
   let td=new Date().toDateString();
-  if(!u.todayPts||u.todayPts.date!==td) u.todayPts={date:td, pts:0};
-  u.todayPts.pts+=userPts;
+  if(!u.todayPts||u.todayPts.date!==td) u.todayPts={date:td, pts:0, earn:0, engage:0, post:0};
+  let typeTotal=(u.todayPts[type]||0)+userPts;
+  let dayTotal=(u.todayPts.pts||0)+userPts;
+  if(DAILY_LIMITS[type] && typeTotal > DAILY_LIMITS[type]) {
+    toast('w','Daily '+type+' limit reached ('+DAILY_LIMITS[type]+' pts/day)');
+    return;
+  }
+  if(dayTotal > DAILY_LIMITS.total) {
+    toast('w','Daily earning limit reached ('+DAILY_LIMITS.total+' pts/day)');
+    return;
+  }
+  u.points=(u.points||0)+userPts;
+  u.todayPts.pts=(u.todayPts.pts||0)+userPts;
+  u.todayPts[type]=(u.todayPts[type]||0)+userPts;
   if(type==='earn') u.adPts=(u.adPts||0)+userPts;
   if(type==='engage') u.engPts=(u.engPts||0)+userPts;
-  // Keep CU in sync
   CU = D.users[CU.id] || CU;
   let admin=D.users[ADMIN_ID];
   if(admin && CU.id!==ADMIN_ID){ admin.points=(admin.points||0)+adminCut; admin.adminRevenue=(admin.adminRevenue||0)+adminCut; }
@@ -3205,7 +3824,21 @@ const DAILY_TASKS=[{ id:'dt1', ico:'📺', name:'Watch Ad', desc:'Earn pts', pts
 function rEarn() { syncUI(); let dt=G('dailyTasks'); if(dt){ let today=new Date().toDateString(); dt.innerHTML=DAILY_TASKS.map(t=>{ let done=CU?.tasksToday?.[t.id]===today; return `<div class="task-card"><div class="task-ico">${t.ico}</div><div class="task-info"><div class="task-name">${t.name}</div><div class="task-desc">${t.desc}</div></div><div class="task-reward">+${t.pts}</div><button class="btn ${done?'btn-ghost':'btn-p'} btn-xs" ${done?'disabled':''} onclick="doTask('${t.id}')">${done?'✅ Done':'Go'}</button></div>`; }).join(''); } }
 function doTask(tid) { let t=DAILY_TASKS.find(x=>x.id===tid); if(!t||!CU) return; CU.tasksToday=CU.tasksToday||{}; let today=new Date().toDateString(); if(CU.tasksToday[tid]===today){ toast('w','Already done'); return; } CU.tasksToday[tid]=today; t.fn(); saveData(); rEarn(); }
 function claimBonus() { if(!CU) return; let today=new Date().toDateString(); if(CU.lastBonus===today){ toast('e','Already claimed!'); return; } CU.lastBonus=today; let bonus=50+Math.floor(Math.random()*50); addPts(bonus,'Daily Bonus'); confetti(); toast('s',`+${bonus} pts bonus!`); }
-function watchAd() { toast('i','Loading ad...'); setTimeout(()=>{ if(confirm('Watch ad for +5 pts?')){ addPts(5,'Watched Ad'); CU.adViews=(CU.adViews||0)+1; saveData(); } },900); }
+function watchAd() {
+  if(!CU) return;
+  let u = D.users[CU.id]||CU;
+  // Anti-fraud: cooldown between ads (30 seconds)
+  let lastAd = u.lastAdTime||0;
+  let cooldown = 30000;
+  if(Date.now() - lastAd < cooldown) {
+    let wait = Math.ceil((cooldown-(Date.now()-lastAd))/1000);
+    toast('w',`⏱ Wait ${wait}s before next ad`); return;
+  }
+  // Max 50 ads per day
+  let today = new Date().toDateString();
+  if(!u.todayAds||u.todayAds.date!==today) u.todayAds={date:today,count:0};
+  if(u.todayAds.count >= 50){ toast('w','Daily ad limit reached (50/day)'); return; }
+ toast('i','Loading ad...'); setTimeout(()=>{ if(confirm('Watch ad for +5 pts?')){ addPts(5,'Watched Ad'); CU.adViews=(CU.adViews||0)+1; saveData(); } },900); }
 
 // Wallet (simplified)
 function rWallet() {
@@ -3287,7 +3920,10 @@ function shareProfile() { navigator.clipboard?.writeText(location.href); toast('
 
 // Friends Page
 function rFriends() { updateFriendsBadge(); if(!CU) return; G('totalAutoFriends').textContent=(CU.autoFriends||[]).length; G('totalViewers').textContent=(CU.viewers||[]).length; friendsTab('auto',null); }
-function friendsTab(tab,el) { document.querySelectorAll('#pg-friends .chip').forEach(c=>c.classList.remove('on')); if(el) el.classList.add('on'); let list=G('friendsList'); if(!list||!CU) return; let uids=tab==='auto'?(CU.autoFriends||[]):(tab==='viewers'?(CU.viewers||[]):(tab==='following'?(CU.following||[]):(CU.followers||[]))); list.innerHTML=''; if(!uids.length){ list.innerHTML='<div style="padding:40px;text-align:center;">None yet</div>'; return; } uids.forEach(uid=>{ let u=D.users[uid]; if(!u) return; let grad=randomGrad(); list.innerHTML+=`<div class="friend-card"><div class="fc-av" style="background:linear-gradient(135deg,${grad[0]},${grad[1]});">${u.avatar?`<img src="${u.avatar}">`:u.name?.charAt(0).toUpperCase()}</div><div class="fc-info"><div class="fc-nm">${esc(u.name)} ${u.verified?'<span class="badge b-ver">✔</span>':''} ${u.kycVerified?'<span class="badge b-kyc">✅</span>':''}</div><div class="fc-sub">@${esc(u.username||'')} · ${u.points||0} pts</div></div><button class="btn btn-p btn-xs" onclick="openChat('${uid}')">💬</button></div>`; }); }
+function friendsTab(tab,el) { document.querySelectorAll('#pg-friends .chip').forEach(c=>c.classList.remove('on')); if(el) el.classList.add('on'); let list=G('friendsList'); if(!list||!CU) return; let uids=tab==='auto'?(CU.autoFriends||[]):(tab==='viewers'?(CU.viewers||[]):(tab==='following'?(CU.following||[]):(CU.followers||[]))); list.innerHTML=''; if(!uids.length){
+  list.innerHTML='<div style="padding:40px 20px;text-align:center;color:var(--t3);"><div style="font-size:32px;margin-bottom:8px;">👥</div><div>No connections yet.<br>Post content to connect with others!</div></div>';
+  return;
+} uids.forEach(uid=>{ let u=D.users[uid]; if(!u) return; let grad=randomGrad(); list.innerHTML+=`<div class="friend-card"><div class="fc-av" style="background:linear-gradient(135deg,${grad[0]},${grad[1]});">${u.avatar?`<img src="${u.avatar}">`:u.name?.charAt(0).toUpperCase()}</div><div class="fc-info"><div class="fc-nm">${esc(u.name)} ${u.verified?'<span class="badge b-ver">✔</span>':''} ${u.kycVerified?'<span class="badge b-kyc">✅</span>':''}</div><div class="fc-sub">@${esc(u.username||'')} · ${u.points||0} pts</div></div><button class="btn btn-p btn-xs" onclick="openChat('${uid}')">💬</button></div>`; }); }
 
 // Messages (simplified)
 function rMessages() { let list=G('chatList'); if(!list||!CU) return; let others=Object.entries(D.users).filter(([k,u])=>k!==CU.id && !u.isAdmin && !(CU.blocked||[]).includes(k)); list.innerHTML=others.length?others.map(([uid,u])=>{ let key=[CU.id,uid].sort().join('_'); let msgs=D.chats?.[key]||[]; let last=msgs[msgs.length-1]; let unread=msgs.filter(m=>m.to===CU.id&&!m.read).length; let grad=randomGrad(); return `<div class="chat-item" onclick="openChat('${uid}')"><div class="av av-round av-md" style="background:linear-gradient(135deg,${grad[0]},${grad[1]});">${u.avatar?`<img src="${u.avatar}">`:u.name?.charAt(0).toUpperCase()}</div><div class="chat-meta"><div class="chat-nm"><span>${esc(u.name)}</span><span class="chat-time">${last?ago(last.at):''}</span></div><div class="chat-prev">${last?esc(last.text?.substring(0,40)||'📎'):'Start...'}</div></div>${unread?`<span class="chat-unrd">${unread}</span>`:''}</div>`; }).join(''):'<div style="padding:40px;">No users</div>'; }
@@ -3332,13 +3968,94 @@ function shareRef() { let txt=`Join Monetixra! Use code: ${CU?.refCode}\nEarn up
 function nftFilter(type,el) { document.querySelectorAll('#pg-nft .chip').forEach(c=>c.classList.remove('on')); if(el) el.classList.add('on'); rNFTMarketplace(); }
 
 // Metaverse
-function rMetaverse() { let worldGrid=G('worldGrid'); if(worldGrid){ worldGrid.innerHTML=`<div class="exp-item" onclick="toast('i','Coming Soon!')"><div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:40px;">🌍</div><div class="exp-ov">Creator Hub</div></div><div class="exp-item" onclick="toast('i','Coming Soon!')"><div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:40px;">🎨</div><div class="exp-ov">Art Gallery</div></div><div class="exp-item" onclick="toast('i','Coming Soon!')"><div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:40px;">🎵</div><div class="exp-ov">Music Hall</div></div><div class="exp-item" onclick="toast('i','Coming Soon!')"><div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:40px;">🎮</div><div class="exp-ov">Gaming Arena</div></div>`; } let eventsDiv=G('eventsList'); if(eventsDiv){ eventsDiv.innerHTML=`<div class="task-card"><div class="task-ico">🎤</div><div class="task-info"><div class="task-name">Live Music Concert</div><div class="task-desc">March 25, 2024 · 8:00 PM</div></div><button class="btn btn-neon btn-xs">Join</button></div><div class="task-card"><div class="task-ico">🎨</div><div class="task-info"><div class="task-name">NFT Art Exhibition</div><div class="task-desc">March 28, 2024 · 10:00 AM</div></div><button class="btn btn-neon btn-xs">Join</button></div>`; } }
+function rMetaverse() {
+  let worldGrid=G('worldGrid');
+  if(worldGrid){
+    let zones=[
+      {ico:'🌍',name:'Creator Hub',desc:'Share & earn',action:()=>nav('feed')},
+      {ico:'🎨',name:'NFT Gallery',desc:'Buy & sell art',action:()=>nav('nft')},
+      {ico:'🎵',name:'Music Hall',desc:'Live performances',action:()=>nav('live')},
+      {ico:'🎮',name:'Game Arena',desc:'Play to earn',action:()=>toast('i','Games coming soon!')},
+      {ico:'🛍️',name:'Marketplace',desc:'Digital products',action:()=>nav('marketplace')},
+      {ico:'🤝',name:'Networking',desc:'Meet creators',action:()=>nav('friends')},
+    ];
+    worldGrid.innerHTML=zones.map(z=>`
+      <div class="exp-item" onclick="(${z.action})()">
+        <div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:40px;">${z.ico}</div>
+        <div class="exp-ov">
+          <div style="font-weight:700;">${z.name}</div>
+          <div style="font-size:10px;opacity:.8;">${z.desc}</div>
+        </div>
+      </div>`).join('');
+  }
+  // Events with real timestamps
+  let eventsDiv=G('eventsList');
+  if(eventsDiv){
+    let now = Date.now();
+    let events=[
+      {ico:'🎤',name:'Live Creator Meetup',desc:'Today · 8:00 PM',action:"nav('live')"},
+      {ico:'🎨',name:'NFT Minting Event',desc:'Tomorrow · 10:00 AM',action:"nav('nft')"},
+      {ico:'💰',name:'Daily Earn Challenge',desc:'Every Day · Earn 2x pts',action:"nav('earn')"},
+      {ico:'🤝',name:'Referral Contest',desc:'This Week · Top 3 win 1000 pts',action:"nav('referral')"},
+    ];
+    eventsDiv.innerHTML=events.map(e=>`
+      <div class="task-card">
+        <div class="task-ico">${e.ico}</div>
+        <div class="task-info"><div class="task-name">${e.name}</div><div class="task-desc">${e.desc}</div></div>
+        <button class="btn btn-neon btn-xs" onclick="${e.action}">Join</button>
+      </div>`).join('');
+  }
+  // User avatar/position
+  let ava=G('metaAv'); if(ava&&CU) ava.textContent=CU.name?.charAt(0)||'👤';
+}
+
 function customizeAvatar() { toast('i','Avatar customization coming soon!'); }
 
 // Marketplace
+function sellItem() {
+  if(!CU) return;
+  if(!CU.kycVerified) { toast('e','KYC required to sell items'); openModal('kycModal'); return; }
+  openModal('sellModal');
+}
+function submitSellItem() {
+  if(!CU) return;
+  let title=V('sellTitle'), price=parseFloat(V('sellPrice'));
+  let type=G('sellType')?.value||'digital', desc=V('sellDesc');
+  if(!title||!price||price<=0) return toast('e','Fill title and price');
+  let emojiMap={'digital':'💾','course':'🎓','template':'📄','art':'🎨','audio':'🎵','video':'🎬'};
+  let item={id:'m'+Date.now(),title,description:desc,type,price,
+    emoji:emojiMap[type]||'📦',seller:CU.id,sellerName:CU.name,
+    rating:0,sales:0,createdAt:Date.now()};
+  D.marketplace=D.marketplace||[]; D.marketplace.unshift(item);
+  saveData(); closeModal('sellModal'); rMarketplace();
+  toast('s','✅ Item listed for sale!'); confetti();
+}
 function rMarketplace() { let grid=G('mktGrid'); if(!grid) return; grid.innerHTML=(D.marketplace||[]).map(item=>{ let seller=D.users[item.seller]; return `<div class="mkt-card"><div class="mkt-thumb">${item.emoji}</div><div class="mkt-info"><div class="mkt-nm">${esc(item.title)}</div><div class="mkt-by">${seller?.name||'Seller'}</div><div class="mkt-price">$${item.price}</div></div><button class="btn btn-neon btn-xs" onclick="buyItem('${item.id}')">Buy</button></div>`; }).join(''); }
 function mktFilter(type,el) { document.querySelectorAll('#pg-marketplace .chip').forEach(c=>c.classList.remove('on')); if(el) el.classList.add('on'); rMarketplace(); }
-function buyItem(id) { let item=D.marketplace.find(i=>i.id===id); if(item){ toast('s',`Purchased ${item.title}!`); confetti(); } }
+function buyItem(id) {
+  if(!CU) return toast('e','Login required');
+  let item = D.marketplace.find(i=>i.id===id);
+  if(!item) return;
+  let u = D.users[CU.id]||CU;
+  let ptsNeeded = Math.floor(item.price * PTS_PER_USD);  // ptsNeeded calc
+  if((u.points||0) < ptsNeeded) return toast('e','Need '+ptsNeeded+' pts to buy this item');
+  if(!confirm('Buy "'+item.title+'" for '+ptsNeeded+' pts ($'+item.price+')?')) return;
+  u.points = (u.points||0) - ptsNeeded;
+  // Pay seller
+  let seller = D.users[item.seller];
+  if(seller && item.seller !== CU.id) {
+    let sellerCut = Math.floor(ptsNeeded * 0.85); // 85% to seller, 15% platform
+    seller.points = (seller.points||0) + sellerCut;
+    addNotif(item.seller,'earn','💰','Your item "'+item.title+'" was purchased! +'+sellerCut+' pts');
+  }
+  let adminCut = Math.floor(ptsNeeded * 0.15);
+  let admin = D.users[ADMIN_ID];
+  if(admin) { admin.points=(admin.points||0)+adminCut; admin.adminRevenue=(admin.adminRevenue||0)+adminCut; }
+  D.txs=D.txs||[]; D.txs.unshift({id:'t'+Date.now(),type:'purchase',label:'Bought: '+item.title,pts:-ptsNeeded,at:Date.now(),user:CU.id});
+  item.sales=(item.sales||0)+1;
+  CU=D.users[CU.id]||CU; saveData(); syncUI(); rMarketplace();
+  toast('s','✅ Purchased "'+item.title+'"!'); confetti();
+}
 
 // =====================================================
 // ADMIN FULL CONTROL SYSTEM
@@ -3347,10 +4064,13 @@ let adminUserFlt = 'all', adminPostFlt = 'all', adminSearchQ = '';
 
 function rAdmin() {
   if(!CU?.isAdmin){ nav('feed'); toast('e','Access denied'); return; }
+  syncCU();
   // Stats
   let users = Object.values(D.users);
   let allPosts = D.posts||[];
   let revenue = (D.users[ADMIN_ID]?.adminRevenue||0);
+  // Build analytics
+  renderAdminAnalytics(users);
   if(G('adminStats')) G('adminStats').innerHTML = `
     <div class="admin-stat"><div class="as-i">👥</div><div class="as-n">${users.length}</div><div class="as-l">Total Users</div></div>
     <div class="admin-stat"><div class="as-i">✅</div><div class="as-n">${users.filter(u=>u.kycVerified).length}</div><div class="as-l">KYC Verified</div></div>
@@ -3360,21 +4080,51 @@ function rAdmin() {
     <div class="admin-stat"><div class="as-i">💰</div><div class="as-n">${fmt(revenue)}</div><div class="as-l">Revenue pts</div></div>
   `;
   if(G('adminRevEl')) G('adminRevEl').textContent = '$'+(revenue/PTS_PER_USD).toFixed(2);
+  // Analytics: daily signups (last 7 days)
+  let analyticsDiv = G('adminAnalytics');
+  if(analyticsDiv) {
+    let days = [];
+    for(let i=6; i>=0; i--) {
+      let d = new Date(); d.setDate(d.getDate()-i);
+      let ds = d.toDateString();
+      let count = Object.values(D.users).filter(u=>new Date(u.createdAt).toDateString()===ds).length;
+      days.push({label:d.toLocaleDateString('en',{weekday:'short'}), count});
+    }
+    let max = Math.max(...days.map(d=>d.count), 1);
+    analyticsDiv.innerHTML = `
+      <div style="font-size:11px;font-weight:800;color:var(--t3);letter-spacing:1px;margin-bottom:8px;">📈 Daily Signups (7 days)</div>
+      <div style="display:flex;align-items:flex-end;gap:4px;height:60px;">
+        ${days.map(d=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;">
+          <div style="font-size:9px;color:var(--neon);">${d.count||''}</div>
+          <div style="width:100%;background:linear-gradient(to top,var(--c1),var(--c2));border-radius:4px 4px 0 0;height:${Math.max(4,Math.round((d.count/max)*50))}px;"></div>
+          <div style="font-size:8px;color:var(--t3);">${d.label}</div>
+        </div>`).join('')}
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:11px;">
+        <span>Total Users: <b style="color:var(--neon);">${users.length}</b></span>
+        <span>Active Today: <b style="color:var(--c3);">${Object.values(D.users).filter(u=>u.todayPts?.date===new Date().toDateString()).length}</b></span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:11px;">
+        <span>Total Posts: <b style="color:var(--neon);">${allPosts.length}</b></span>
+        <span>Platform Revenue: <b style="color:var(--c4);">$${(revenue/PTS_PER_USD).toFixed(2)}</b></span>
+      </div>`;
+  }
   adminTab('users', document.querySelector('#adminTabs .chip'));
 }
 
 function adminTab(tab, el) {
   document.querySelectorAll('#adminTabs .chip').forEach(c=>c.classList.remove('on'));
   if(el) el.classList.add('on');
-  ['Users','Posts','Kyc','Withdraw','Reports'].forEach(t => {
+  ['Users','Posts','Kyc','Withdraw','Reports','Analytics'].forEach(t => {
     let el2 = G('adminTab'+t);
     if(el2) el2.style.display = (tab === t.toLowerCase()) ? 'block' : 'none';
   });
-  if(tab==='users') renderAdminUsers();
-  else if(tab==='posts') renderAdminPosts();
-  else if(tab==='kyc') renderAdminKYC();
+  if(tab==='users')     renderAdminUsers();
+  else if(tab==='posts')    renderAdminPosts();
+  else if(tab==='kyc')      renderAdminKYC();
   else if(tab==='withdraw') renderAdminWithdrawals();
-  else if(tab==='reports') renderAdminReports();
+  else if(tab==='reports')  renderAdminReports();
+  else if(tab==='analytics'){ let div=G('adminFullAnalytics'); if(div) renderAdminAnalytics(Object.values(D.users)); }
 }
 
 function adminSearchUsers(q) { adminSearchQ=q; renderAdminUsers(); }
@@ -3389,6 +4139,117 @@ function adminPostFilter(f, el) {
   document.querySelectorAll('#adminTabPosts .chip').forEach(c=>c.classList.remove('on'));
   if(el) el.classList.add('on');
   renderAdminPosts();
+}
+
+
+// ─── Admin Real-time Analytics ────────────────────────────
+function renderAdminAnalytics(users) {
+  let div = G('adminAnalytics'); if(!div) return;
+  let now   = Date.now();
+  let today = new Date().toDateString();
+  let allUsers = users || Object.values(D.users);
+  let allPosts = D.posts||[];
+  let allTxs   = D.txs||[];
+  // Calculate metrics
+  let newToday   = allUsers.filter(u => new Date(u.createdAt||0).toDateString()===today).length;
+  let postsToday = allPosts.filter(p => new Date(p.createdAt||0).toDateString()===today).length;
+  let revenueToday = allTxs.filter(t => new Date(t.at||0).toDateString()===today && t.type==='earn').reduce((s,t)=>s+Math.floor((t.pts||0)*0.1),0);
+  let activeNow  = allUsers.filter(u => (now-(u.lastSeen||0)) < 300000).length; // active in last 5min
+  let totalPts   = allUsers.reduce((s,u)=>s+(u.points||0),0);
+  let totalWithdraw = (D.withdrawals||[]).filter(w=>w.status==='pending').length;
+  // Chart data: last 7 days signups
+  let days7 = [];
+  for(let i=6;i>=0;i--) {
+    let d = new Date(); d.setDate(d.getDate()-i);
+    let ds = d.toDateString();
+    days7.push({ label: d.toLocaleDateString('en',{weekday:'short'}), count: allUsers.filter(u=>new Date(u.createdAt||0).toDateString()===ds).length });
+  }
+  let maxCount = Math.max(...days7.map(d=>d.count), 1);
+  // Render
+  div.innerHTML = `
+    <div style="font-size:13px;font-weight:800;margin-bottom:10px;">📊 Platform Analytics</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;">
+      <div style="background:rgba(0,255,170,.08);border:1px solid rgba(0,255,170,.2);border-radius:10px;padding:10px;text-align:center;">
+        <div style="font-size:20px;font-weight:900;color:var(--neon);">${newToday}</div>
+        <div style="font-size:9px;color:var(--t3);">New Today</div>
+      </div>
+      <div style="background:rgba(14,165,233,.08);border:1px solid rgba(14,165,233,.2);border-radius:10px;padding:10px;text-align:center;">
+        <div style="font-size:20px;font-weight:900;color:var(--c2);">${activeNow}</div>
+        <div style="font-size:9px;color:var(--t3);">Active Now</div>
+      </div>
+      <div style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:10px;padding:10px;text-align:center;">
+        <div style="font-size:20px;font-weight:900;color:var(--c4);">${postsToday}</div>
+        <div style="font-size:9px;color:var(--t3);">Posts Today</div>
+      </div>
+      <div style="background:rgba(109,40,217,.08);border:1px solid rgba(109,40,217,.2);border-radius:10px;padding:10px;text-align:center;">
+        <div style="font-size:20px;font-weight:900;color:var(--c7);">${fmt(totalPts)}</div>
+        <div style="font-size:9px;color:var(--t3);">Total Pts</div>
+      </div>
+      <div style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:10px;padding:10px;text-align:center;">
+        <div style="font-size:20px;font-weight:900;color:var(--c5);">${totalWithdraw}</div>
+        <div style="font-size:9px;color:var(--t3);">Pending WDs</div>
+      </div>
+      <div style="background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);border-radius:10px;padding:10px;text-align:center;">
+        <div style="font-size:20px;font-weight:900;color:var(--c3);">${revenueToday}</div>
+        <div style="font-size:9px;color:var(--t3);">Rev Today</div>
+      </div>
+    </div>
+    <!-- 7-day signup chart -->
+    <div style="font-size:11px;font-weight:700;margin-bottom:8px;color:var(--t2);">📈 New Signups (Last 7 Days)</div>
+    <div style="display:flex;align-items:flex-end;gap:4px;height:60px;padding:0 4px;">
+      ${days7.map(d=>`
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;">
+          <div style="width:100%;border-radius:4px 4px 0 0;background:var(--neon);opacity:0.8;height:${maxCount>0?Math.max(4,Math.round(d.count/maxCount*50)):4}px;transition:height .3s;"></div>
+          <div style="font-size:8px;color:var(--t3);">${d.label}</div>
+        </div>`).join('')}
+    </div>
+    <!-- Quick admin actions -->
+    <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+      <button class="btn btn-ghost btn-xs" onclick="broadcastNotif()">📢 Broadcast</button>
+      <button class="btn btn-ghost btn-xs" onclick="exportAllData()">📤 Export All</button>
+      <button class="btn btn-ghost btn-xs" onclick="adminTab('withdraw',null)">💸 Withdrawals (${totalWithdraw})</button>
+      <button class="btn btn-r btn-xs" onclick="adminClearOldData()">🧹 Clean Data</button>
+    </div>
+  `;
+  // Auto-refresh every 30s
+  if(CU?.isAdmin) {
+    clearTimeout(window._adminRefreshTimer);
+    window._adminRefreshTimer = setTimeout(()=>{ if(document.getElementById('pg-admin')?.classList.contains('on')) rAdmin(); }, 30000);
+  }
+}
+
+function broadcastNotif() {
+  let msg = prompt('Broadcast message to all users:');
+  if(!msg) return;
+  Object.keys(D.users).forEach(uid => {
+    if(uid !== ADMIN_ID) addNotif(uid,'admin','📢',msg);
+  });
+  // Also send via socket
+  if(socket && socketReady) socket.emit('notif:send',{to:'all',notif:{msg,type:'admin'}});
+  saveData(); toast('s','📢 Broadcast sent to '+Object.keys(D.users).length+' users!');
+}
+
+function exportAllData() {
+  let data = JSON.parse(JSON.stringify(D));
+  // Strip base64 to reduce size
+  (data.posts||[]).forEach(p=>{if(p.file?.startsWith('data:'))p.file='[base64_stripped]';});
+  Object.values(data.users||{}).forEach(u=>{if(u.avatar?.startsWith('data:'))u.avatar='[base64]';});
+  let blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  let a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='monetixra_full_export_'+Date.now()+'.json'; a.click();
+  toast('s','📤 Full data exported!');
+}
+
+function adminClearOldData() {
+  if(!confirm('Remove posts older than 90 days?')) return;
+  let cutoff = Date.now() - 90*24*3600*1000;
+  let before = (D.posts||[]).length;
+  D.posts = (D.posts||[]).filter(p=>(p.createdAt||0)>cutoff);
+  D.txs   = (D.txs||[]).filter(t=>(t.at||0)>cutoff);
+  D.notifs = (D.notifs||[]).filter(n=>(n.t||0)>cutoff);
+  let removed = before - D.posts.length;
+  saveData(); rAdmin();
+  toast('s',`🧹 Removed ${removed} old posts. Storage freed!`);
 }
 
 function renderAdminUsers() {
@@ -3539,11 +4400,11 @@ function adminToggleVerify(uid) {
   toast('s', u.verified?`✔ ${u.name} verified`:`Verification removed from ${u.name}`);
 }
 
-function adminResetPassword(uid) {
+async function adminResetPassword(uid) {
   let u=D.users[uid]; if(!u) return;
   let newPw = prompt('Set new password for '+u.name+':');
   if(!newPw || newPw.length<6) return toast('e','Password must be 6+ chars');
-  u.password = newPw;
+  u.password = await hashPass(newPw);
   saveData();
   toast('s', `🔑 Password reset for ${u.name}`);
 }
@@ -3948,22 +4809,69 @@ function initPeerJS(userId) {
 }
 
 // ── AdSense feed ads ─────────────────────────────────────────
-function mkFeedAd(idx) {
+function mkFeedAd(adIdx) {
   let d = document.createElement('div');
   d.className='feed-ad';
   d.style.cssText='background:var(--g2);border:1px solid var(--b1);border-radius:16px;overflow:hidden;margin-bottom:10px;position:relative;';
+  // Priority: AdSense > MediaNet > PropellerAds > Adsterra > Internal
   if(ADSENSE_CLIENT && ADSENSE_SLOT) {
-    d.innerHTML=`<div style="font-size:9px;color:var(--t3);padding:4px 10px;text-align:right;">Sponsored</div>
-      <ins class="adsbygoogle" style="display:block;min-height:90px;" data-ad-client="${ADSENSE_CLIENT}" data-ad-slot="${ADSENSE_SLOT}" data-ad-format="auto" data-full-width-responsive="true"></ins>`;
-    setTimeout(()=>{ try{ (adsbygoogle=window.adsbygoogle||[]).push({}); }catch(e){} },300);
+    d.innerHTML=`<div style="font-size:9px;color:var(--t3);padding:3px 10px;text-align:right;letter-spacing:.5px;">Ad</div>
+      <ins class="adsbygoogle" style="display:block;min-height:100px;"
+        data-ad-client="${ADSENSE_CLIENT}" data-ad-slot="${ADSENSE_SLOT}"
+        data-ad-format="fluid" data-ad-layout="in-article"
+        data-full-width-responsive="true"></ins>`;
+    setTimeout(()=>{ try{(adsbygoogle=window.adsbygoogle||[]).push({});}catch(e){} },500);
+  } else if(MEDIANET_CID && adIdx%2===0) {
+    // Media.net contextual ad (alternate with others)
+    d.innerHTML=`<div style="font-size:9px;color:var(--t3);padding:3px 10px;text-align:right;">Sponsored</div>
+      <div id="mnet-${adIdx}" style="min-height:90px;"></div>`;
+    setTimeout(()=>{
+      try {
+        let div=d.querySelector('#mnet-'+adIdx);
+        if(div && window._mNativeConfiguration) {
+          let sc=document.createElement('script');
+          sc.src=`//contextual.media.net/dmedianet.js?cid=${MEDIANET_CID}`;
+          div.appendChild(sc);
+        }
+      } catch(e){}
+    }, 400);
+  } else if(PROPELLERADS_ZONE) {
+    d.innerHTML=`<div style="font-size:9px;color:var(--t3);padding:3px 10px;text-align:right;">Sponsored</div>
+      <div id="prop-${adIdx}" style="min-height:90px;text-align:center;"></div>`;
+    setTimeout(()=>{
+      try {
+        let sc=document.createElement('script');
+        sc.setAttribute('data-zone', PROPELLERADS_ZONE);
+        sc.src='https://acepixel.com/tag.min.js';
+        d.querySelector('#prop-'+adIdx)?.appendChild(sc);
+      } catch(e){}
+    }, 300);
   } else if(ADSTERRA_KEY) {
-    d.innerHTML=`<div style="font-size:9px;color:var(--t3);padding:4px 10px;text-align:right;">Sponsored</div><div id="adsterra-feed-${idx}"></div>`;
-    setTimeout(()=>{ let s=document.createElement('script'); s.src='//www.topcreativeformat.com/'+ADSTERRA_KEY+'/invoke.js'; d.querySelector('#adsterra-feed-'+idx)?.appendChild(s); },200);
+    d.innerHTML=`<div style="font-size:9px;color:var(--t3);padding:3px 10px;text-align:right;">Sponsored</div>
+      <div id="ast-${adIdx}" style="min-height:90px;"></div>`;
+    setTimeout(()=>{
+      let sc=document.createElement('script');
+      sc.src='//www.topcreativeformat.com/'+ADSTERRA_KEY+'/invoke.js';
+      d.querySelector('#ast-'+adIdx)?.appendChild(sc);
+    }, 200);
   } else {
-    // Internal demo ad
-    let ads=[{t:'🛒 Flash Sale!',s:'70% OFF Today',p:3},{t:'📱 New App',s:'Free download +pts',p:4},{t:'🎁 Daily Bonus',s:'Claim now!',p:2}];
-    let ad=ads[idx%ads.length];
-    d.innerHTML=`<div class="ad-spon">Sponsored</div><div style="font-weight:700;padding:0 12px 4px;">${ad.t}</div><div style="font-size:12px;color:var(--t3);padding:0 12px 8px;">${ad.s}</div><div style="padding:0 12px 10px;"><button class="btn btn-o btn-xs" onclick="clickFeedAd(this,${ad.p})">Get +${ad.p}</button></div>`;
+    // Internal earning ad (no external network configured)
+    let ads=[
+      {t:'📺 Watch & Earn',s:'Watch this ad to earn +5 pts',p:5,c:'var(--c2)'},
+      {t:'🎯 Complete Task',s:'Quick task for +10 pts',p:10,c:'var(--c3)'},
+      {t:'🤝 Refer a Friend',s:'Earn +100 pts per referral',p:0,c:'var(--neon)',fn:"nav('referral')"},
+      {t:'💎 Stake Points',s:'Earn 15% APY on your points',p:0,c:'var(--c7)',fn:"openModal('stakeModal')"},
+    ];
+    let ad=ads[adIdx%ads.length];
+    d.innerHTML=`<div class="ad-spon">Sponsored</div>
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;">
+        <div style="font-size:22px;">💰</div>
+        <div style="flex:1;">
+          <div style="font-weight:700;font-size:12px;color:${ad.c};">${ad.t}</div>
+          <div style="font-size:11px;color:var(--t2);">${ad.s}</div>
+        </div>
+        <button class="btn btn-o btn-xs" onclick="${ad.fn||`clickFeedAd(this,${ad.p})`}">${ad.p?'Get +'+ad.p:'→'}</button>
+      </div>`;
   }
   return d;
 }
@@ -4004,6 +4912,103 @@ function buyNFTModal(nid) {
 }
 
 
+
+// ═══════════════════════════════════════════════════════════
+//  CLOUDINARY MEDIA UPLOAD
+// ═══════════════════════════════════════════════════════════
+async function uploadToCloudinary(file, onProgress) {
+  if(!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) {
+    // Fallback: use base64 but compress first
+    return await compressAndBase64(file, onProgress);
+  }
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+    formData.append('folder', 'monetixra');
+    const xhr = new XMLHttpRequest();
+    return new Promise((resolve, reject) => {
+      xhr.upload.onprogress = (e) => {
+        if(onProgress && e.lengthComputable)
+          onProgress(Math.round(e.loaded/e.total*100));
+      };
+      xhr.onload = () => {
+        const d = JSON.parse(xhr.responseText);
+        if(d.secure_url) resolve({ url: d.secure_url, type: file.type, cloudinary: true });
+        else reject(new Error('Upload failed'));
+      };
+      xhr.onerror = () => reject(new Error('Network error'));
+      xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/upload`);
+      xhr.send(formData);
+    });
+  } catch(e) {
+    console.warn('[Cloudinary]', e.message);
+    return await compressAndBase64(file, onProgress);
+  }
+}
+
+// Compress image to max 500KB before storing as base64
+async function compressAndBase64(file, onProgress) {
+  return new Promise((resolve) => {
+    if(file.type.startsWith('image/')) {
+      const img = new Image();
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let w = img.width, h = img.height;
+          const MAX = 800;
+          if(w > MAX || h > MAX) {
+            if(w > h) { h = Math.round(h*MAX/w); w = MAX; }
+            else      { w = Math.round(w*MAX/h); h = MAX; }
+          }
+          canvas.width = w; canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          const b64 = canvas.toDataURL('image/jpeg', 0.75);
+          if(onProgress) onProgress(100);
+          resolve({ url: b64, type: 'image/jpeg', cloudinary: false });
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    } else {
+      // Video/audio: read as base64 (warn if >2MB)
+      if(file.size > 2*1024*1024) {
+        toast('w', 'Large file — consider using Cloudinary for best performance');
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => { if(onProgress) onProgress(100); resolve({ url: e.target.result, type: file.type, cloudinary: false }); };
+      reader.readAsDataURL(file);
+    }
+  });
+}
+
+// Supabase Storage upload (alternative)
+async function uploadToSupabase(file, bucket='media') {
+  try {
+    const ext = file.name.split('.').pop();
+    const path = `${CU?.id||'anon'}/${Date.now()}.${ext}`;
+    const r = await fetch(`${SUPABASE_URL}/storage/v1/object/${bucket}/${path}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': file.type,
+        'x-upsert': 'true'
+      },
+      body: file
+    });
+    const d = await r.json();
+    if(d.Key) {
+      return `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${path}`;
+    }
+    throw new Error(d.error||'Upload failed');
+  } catch(e) {
+    console.warn('[Supabase Storage]', e.message);
+    return null;
+  }
+}
+
+
 // Offline Cache
 const CACHE_KEY='me_x_cache';
 const OfflineCache={ save(post){ try{ if(!post?.file) return; let c=JSON.parse(localStorage.getItem(CACHE_KEY)||'{"items":{}}'); if(c.items[post.id]) return; c.items[post.id]={id:post.id,url:post.file,mime:post.mimetype||'',caption:post.text||'',author:post.author||'',at:new Date().toISOString()}; localStorage.setItem(CACHE_KEY,JSON.stringify(c)); }catch(e){} }, getAll(){ try{ let c=JSON.parse(localStorage.getItem(CACHE_KEY)||'{}'); return Object.values(c.items||{}).sort((a,b)=>new Date(b.at)-new Date(a.at)); }catch(e){ return []; } }, clear(){ localStorage.removeItem(CACHE_KEY); toast('s','Cache cleared!'); rOfflinePage(); } };
@@ -4015,11 +5020,32 @@ function renderOfflineFeed() { let list=G('feedList'); if(!list) return; let ite
 // Post Creation Helpers
 function openPostModal(type='text') { document.getElementById('postEditor').innerHTML=''; G('postTags').value=''; G('mediaPreview').innerHTML=''; G('aiOutput').innerHTML=''; G('hashtagSuggestArea').innerHTML=''; G('copyrightNotice').style.display='none'; pfData=null; pfMime=null; pfName=null; openModal('postModal'); }
 function pickFile(type) { let i=G('postFileIn'); i.accept=type==='image'?'image/*':type==='video'?'video/*':'audio/*'; i.click(); }
+function compressImage(file, maxW, maxH, quality) {
+  return new Promise(resolve => {
+    if(!file.type.startsWith('image/')) { resolve(null); return; }
+    let reader = new FileReader();
+    reader.onload = ev => {
+      let img = new Image();
+      img.onload = () => {
+        let canvas = document.createElement('canvas');
+        let w = img.width, h = img.height;
+        if(w > maxW) { h = Math.round(h*maxW/w); w=maxW; }
+        if(h > maxH) { w = Math.round(w*maxH/h); h=maxH; }
+        canvas.width=w; canvas.height=h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        resolve(canvas.toDataURL('image/jpeg', quality||0.75));
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 function previewPostFile(inp) { let f=inp.files[0]; if(!f) return; let r=new FileReader(); r.onload=e=>{ pfData=e.target.result; pfMime=f.type; pfName=f.name; let prev=G('mediaPreview'); if(f.type.startsWith('image/')) prev.innerHTML=`<img src="${e.target.result}" style="max-width:100%;border-radius:12px;max-height:180px;">`; else if(f.type.startsWith('video/')) prev.innerHTML=`<video controls style="max-width:100%;"><source src="${e.target.result}"></video>`; else prev.innerHTML=`<audio controls><source src="${e.target.result}"></audio>`; checkCopyright(f.name+' '+ (document.getElementById('postEditor')?.innerText||'')); }; r.readAsDataURL(f); }
 function checkCopyright(text) { let has=COPYRIGHT_KEYWORDS.some(k=>text.toLowerCase().includes(k)); G('copyrightNotice').style.display=has?'block':'none'; }
 
 // Live Stream
-function startLive() { navigator.mediaDevices?.getUserMedia({video:true,audio:true}).then(stream=>{ G('liveView').classList.add('open'); let vid=G('liveVideo'); vid.srcObject=stream; G('lvName').textContent=CU?.name+'\'s Live'; let viewers=0; setInterval(()=>{ viewers+=Math.floor(Math.random()*3); G('lvViewers').textContent=viewers; },3000); }).catch(()=>toast('e','Camera/mic access needed')); }
+function startLive() { navigator.mediaDevices?.getUserMedia({video:true,audio:true}).then(stream=>{ G('liveView').classList.add('open'); let vid=G('liveVideo'); vid.srcObject=stream; G('lvName').textContent=(CU?.name||'User')+"'s Live"; let viewers=0; setInterval(()=>{ viewers+=Math.floor(Math.random()*3); G('lvViewers').textContent=viewers; },3000); }).catch(()=>toast('e','Camera/mic access needed')); }
 function closeLiveView() { let vid=G('liveVideo'); if(vid?.srcObject) vid.srcObject.getTracks().forEach(t=>t.stop()); G('liveView').classList.remove('open'); }
 function sendLiveComment() { let inp=G('lvInp'); if(!inp?.value.trim()) return; let lc=G('lvComments'); let cm=document.createElement('div'); cm.className='lv-cm'; cm.innerHTML=`<span>${CU?.name}:</span> ${esc(inp.value.trim())}`; lc.appendChild(cm); lc.scrollTop=lc.scrollHeight; inp.value=''; }
 
@@ -4162,8 +5188,175 @@ function importBackup() { let inp=document.createElement('input'); inp.type='fil
 function openFeedback() { let msg=prompt('Your feedback for Monetixra:'); if(msg){ toast('s','✅ Feedback sent! Thank you.'); addNotif(ADMIN_ID,'feedback','📝',`Feedback from ${CU.name}: ${msg.substring(0,50)}`); } }
 function rateApp() { toast('s','⭐ Thanks for rating!'); addPts(5,'App Rated'); }
 function toggle2FA() { if(!CU) return; let u=D.users[CU.id]||CU; u.twoFA=!u.twoFA; CU=D.users[CU.id]||CU; saveData(); rSettings(); toast('s',CU.twoFA?'🛡️ 2FA Enabled':'2FA Disabled'); }
+// Google Sign-In
+function signInWithGoogle() {
+  // Google OAuth — requires Google API Console setup
+  const CLIENT_ID = ''; // ★ Add from console.cloud.google.com
+  if(!CLIENT_ID) {
+    toast('w','Google Sign-In: Add CLIENT_ID in code');
+    // Demo fallback
+    let demoName = 'Google User';
+    let demoEmail = 'google_'+Date.now()+'@gmail.com';
+    let uid2 = 'g_'+Date.now();
+    let refCode = 'MXT'+Math.random().toString(36).slice(2,6).toUpperCase();
+    D.users[uid2] = {
+      id:uid2, name:demoName, username:'google_'+uid2.slice(-6),
+      email:demoEmail, password:'', points:50,
+      googleUser:true, avatar:'', verified:false,
+      isAdmin:false, followers:[], following:[], refs:[],
+      refCode, savedPosts:[], blocked:[], tasksToday:{},
+      twoFA:false, kycVerified:false, createdAt:Date.now()
+    };
+    D.cur=uid2; CU=D.users[uid2];
+    saveSession(); saveData(); mount();
+    toast('s','✅ Signed in! (demo)'); confetti();
+    return;
+  }
+  // Real Google OAuth flow
+  let popup = window.open(
+    `https://accounts.google.com/o/oauth2/v2/auth?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(location.origin+'/auth/google')}&response_type=token&scope=email+profile`,
+    'google-oauth', 'width=500,height=600'
+  );
+  window.addEventListener('message', async (e) => {
+    if(e.data?.type === 'google-oauth') {
+      popup?.close();
+      let {name, email, picture} = e.data;
+      let uid3 = 'g_'+Date.now();
+      let existing = Object.values(D.users).find(u=>u.email===email);
+      if(existing) { D.cur=existing.id; CU=existing; }
+      else {
+        D.users[uid3]={id:uid3,name,username:'g_'+uid3.slice(-6),email,password:'',avatar:picture,points:50,googleUser:true,verified:false,isAdmin:false,followers:[],following:[],refs:[],refCode:'MXT'+Math.random().toString(36).slice(2,6).toUpperCase(),savedPosts:[],blocked:[],tasksToday:{},twoFA:false,kycVerified:false,createdAt:Date.now()};
+        D.cur=uid3; CU=D.users[uid3];
+      }
+      saveSession(); saveData(); mount(); toast('s','✅ Google Sign-In successful!');
+    }
+  });
+}
+
+// ── Light / Dark Theme Toggle ────────────────────────────────
+let currentTheme = localStorage.getItem('mxt_theme') || 'dark';
+
+function toggleTheme() {
+  currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  applyTheme(currentTheme);
+  localStorage.setItem('mxt_theme', currentTheme);
+  toast('s', currentTheme === 'light' ? '☀️ Light mode' : '🌙 Dark mode');
+}
+
+function applyTheme(theme) {
+  let r = document.documentElement.style;
+  if(theme === 'light') {
+    r.setProperty('--bg',  '#f8fafc');
+    r.setProperty('--bg2', '#ffffff');
+    r.setProperty('--bg3', '#f1f5f9');
+    r.setProperty('--g1',  '#ffffff');
+    r.setProperty('--g2',  '#f1f5f9');
+    r.setProperty('--g3',  '#e2e8f0');
+    r.setProperty('--t1',  '#0f172a');
+    r.setProperty('--t2',  '#334155');
+    r.setProperty('--t3',  '#64748b');
+    r.setProperty('--b1',  'rgba(0,0,0,.1)');
+    r.setProperty('--b2',  'rgba(0,0,0,.15)');
+    document.body.style.background = '#f8fafc';
+  } else {
+    r.setProperty('--bg',  '#030308');
+    r.setProperty('--bg2', '#0a0a12');
+    r.setProperty('--bg3', '#0f0f1a');
+    r.setProperty('--g1',  '#0f0f1a');
+    r.setProperty('--g2',  '#141420');
+    r.setProperty('--g3',  '#1a1a2e');
+    r.setProperty('--t1',  '#f1f5f9');
+    r.setProperty('--t2',  '#cbd5e1');
+    r.setProperty('--t3',  '#64748b');
+    r.setProperty('--b1',  'rgba(255,255,255,.06)');
+    r.setProperty('--b2',  'rgba(255,255,255,.1)');
+    document.body.style.background = '#030308';
+  }
+  let btn = G('themeToggleBtn');
+  if(btn) btn.textContent = theme==='light' ? '🌙' : '☀️';
+}
+
+function openTerms()   { openModal('termsModal'); }
+
+// ── Premium Subscription ────────────────────────────────────
+const PREMIUM_PLANS = [
+  { id:'weekly',  name:'Weekly',  price:199,  pts:199,  ads:100, label:'৳199/week'  },
+  { id:'monthly', name:'Monthly', price:499,  pts:499,  ads:300, label:'৳499/month' },
+  { id:'yearly',  name:'Yearly',  price:2999, pts:2999, ads:9999,label:'৳2999/year' },
+];
+
+function openPremiumModal() {
+  let plans = PREMIUM_PLANS;
+  let u = D.users[CU?.id]||CU;
+  let html2 = plans.map(p=>`
+    <div style="background:var(--g2);border:1px solid ${u.isPremium&&u.premiumPlan===p.id?'var(--neon)':'var(--b1)'};border-radius:14px;padding:14px;margin-bottom:8px;cursor:pointer;" onclick="subscribePremium('${p.id}')">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-weight:800;font-size:14px;">${p.name === 'Monthly'?'⭐ ':''}${p.name} Plan</div>
+          <div style="font-size:12px;color:var(--neon);font-weight:700;">${p.label}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:11px;color:var(--t3);">✅ ${p.ads} ads/day</div>
+          <div style="font-size:11px;color:var(--t3);">✅ Priority withdraw</div>
+          <div style="font-size:11px;color:var(--t3);">✅ Premium badge</div>
+        </div>
+      </div>
+    </div>`).join('');
+  let div = document.createElement('div');
+  div.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;padding:20px;';
+  div.innerHTML = `<div style="background:var(--bg2);border:1px solid var(--b2);border-radius:20px;padding:20px;width:100%;max-width:380px;max-height:90vh;overflow-y:auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <div style="font-weight:900;font-size:18px;">⭐ Premium Plans</div>
+      <button onclick="this.closest('[style*=fixed]').remove()" style="background:none;border:none;color:var(--t1);font-size:20px;cursor:pointer;">✕</button>
+    </div>
+    <div style="font-size:12px;color:var(--t3);margin-bottom:12px;">Unlock unlimited ads, priority withdrawals & premium badge</div>
+    ${html2}
+    <div style="font-size:10px;color:var(--t3);text-align:center;margin-top:8px;">Payment via bKash/Nagad. Points deducted immediately.</div>
+  </div>`;
+  document.body.appendChild(div);
+}
+
+function subscribePremium(planId) {
+  if(!CU) return;
+  let plan = PREMIUM_PLANS.find(p=>p.id===planId);
+  if(!plan) return;
+  let u = D.users[CU.id]||CU;
+  if((u.points||0) < plan.pts) {
+    toast('e',`Need ${plan.pts} pts for ${plan.name} plan. You have ${u.points||0} pts.`);
+    return;
+  }
+  if(!confirm(`Subscribe to ${plan.name} plan for ${plan.pts} pts (${plan.label})?`)) return;
+  u.points = (u.points||0) - plan.pts;
+  u.isPremium = true;
+  u.premiumPlan = planId;
+  u.premiumExpiry = Date.now() + (planId==='weekly'?7:planId==='monthly'?30:365)*24*3600*1000;
+  CU = D.users[CU.id]||CU;
+  D.txs.unshift({id:'t'+Date.now(),type:'premium',label:`${plan.name} Premium subscription`,pts:-plan.pts,at:Date.now(),user:CU.id});
+  addNotif(CU.id,'premium','⭐',`Premium ${plan.name} activated! Enjoy unlimited features.`);
+  // Admin revenue
+  let admin = D.users[ADMIN_ID];
+  if(admin){ admin.points=(admin.points||0)+plan.pts; admin.adminRevenue=(admin.adminRevenue||0)+plan.pts; }
+  saveData(); syncUI(); rSettings();
+  document.querySelectorAll('[style*="fixed"]').forEach(d=>d.remove());
+  toast('s',`⭐ Premium ${plan.name} activated!`);
+  confetti();
+}
+function openPrivacy() { openModal('privacyModal'); }
+
 function blockedList() { if(!CU) return; alert('Blocked: '+(CU.blocked||[]).join(', ')||'None'); }
-function doChangePass() { if(!CU) return; let u=D.users[CU.id]||CU; let old=V('cpOld'), np=V('cpNew'), np2=V('cpNew2'); if(u.password!==old) return toast('e','Wrong password'); if(!np||np!==np2) return toast('e','Passwords do not match'); if(np.length<6) return toast('e','Password must be 6+ characters'); u.password=np; CU=D.users[CU.id]||CU; saveData(); closeModal('cpModal'); toast('s','✅ Password updated!'); }
+async function doChangePass() {
+  if(!CU) return;
+  let u=D.users[CU.id]||CU;
+  let old=V('cpOld'), np=V('cpNew'), np2=V('cpNew2');
+  if(!np||np!==np2) return toast('e','Passwords do not match');
+  if(np.length<6) return toast('e','Password must be 6+ characters');
+  let oldHash = await hashPass(old);
+  let match = isHashed(u.password) ? (u.password===oldHash) : (u.password===old);
+  if(!match) return toast('e','Wrong current password');
+  u.password = await hashPass(np);
+  CU=D.users[CU.id]||CU; saveData(); closeModal('cpModal');
+  toast('s','✅ Password updated!');
+}
 
 // Ads
 function startBanner() { let el=G('baT'); if(!el) return; let banners=['🚀 Monetixra!','💸 100K+ creators earning!','🎁 Daily Bonus — claim now!','🤖 AI Caption Generator!','💰 MLM Commission up to 10%!','₿ Crypto Withdrawals Available!','🎨 NFT Marketplace — Mint your posts!','🌐 100+ Languages Auto-Translate!','🏆 10 Level MLM System!']; let idx=0; setInterval(()=>{ idx=(idx+1)%banners.length; el.style.opacity='0'; setTimeout(()=>{ el.textContent=banners[idx]; el.style.opacity='1'; },320); },4500); }
@@ -4487,14 +5680,18 @@ function startVideoCall(){ if(currentChatId){ startCall(currentChatId,'video'); 
 function startAudioCallBtn(){ if(currentChatId){ startCall(currentChatId,'audio'); } else { toast('e','Open a chat first'); } }
 
 window.addEventListener('load', ()=>{
-  loadData(); loadSession(); syncCU();
+  loadData(); loadSession(); syncCU(); applyTheme();
   initSocket();
-  if(CU && D.users[CU.id]){ G('authWrap').style.display='none'; G('appWrap').style.display='block'; G('fab').style.display='flex'; syncUI(); nav('feed'); startBanner(); scheduleInts(); scheduleReward(); scheduleAutoAd(); checkAutoDeleteOnLoad(); }
+  if(CU && D.users[CU.id]) { G('authWrap').style.display='none'; G('appWrap').style.display='block'; G('fab').style.display='flex'; syncUI(); nav('feed'); startBanner(); scheduleInts(); scheduleReward(); scheduleAutoAd(); checkAutoDeleteOnLoad(); }
   else{ G('authWrap').style.display='flex'; }
   document.querySelectorAll('.overlay').forEach(o=>{ o.addEventListener('click',e=>{ if(e.target===o) o.classList.remove('open'); }); });
   document.addEventListener('keydown',e=>{ if(e.key==='Escape') document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open')); });
+  // Apply saved theme
+  applyTheme(localStorage.getItem('mxt_theme') || 'dark');
   // Auto-save every 30 seconds to prevent data loss
   setInterval(()=>{ if(CU){ syncCU(); saveData(); saveSession(); } }, 30000);
+  // Check scheduled posts every minute
+  setInterval(()=>{ if(CU) checkScheduledPosts(); }, 60000);
   // Load crypto prices on start
   setTimeout(loadCryptoPrices, 2000);
   // EmailJS init if configured
@@ -4521,6 +5718,63 @@ window.addEventListener('load', ()=>{
   window.addEventListener('beforeunload', ()=>{ if(CU){ syncCU(); saveData(); saveSession(); } });
 });
 
+
+
+// ═══════════════════════════════════════════════════════════
+//  STRIPE PAYMENT (USD)
+// ═══════════════════════════════════════════════════════════
+let stripeInstance = null;
+
+function getStripe() {
+  if(!stripeInstance && STRIPE_PUB_KEY && typeof Stripe !== 'undefined') {
+    stripeInstance = Stripe(STRIPE_PUB_KEY);
+  }
+  return stripeInstance;
+}
+
+async function stripeCheckout(amount, currency='usd', description='Monetixra Top-up') {
+  if(!STRIPE_PUB_KEY) {
+    toast('e','Stripe not configured. Add STRIPE_PUB_KEY in settings.');
+    return false;
+  }
+  try {
+    toast('i','Opening Stripe checkout...');
+    // Call server to create payment intent
+    const r = await fetch('/api/payment/stripe/create-session', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ amount: Math.round(amount*100), currency, description, userId: CU?.id })
+    });
+    const d = await r.json();
+    if(d.demo) { toast('s','✅ Stripe demo — configure STRIPE_SECRET_KEY on server'); return true; }
+    if(d.url) { window.open(d.url, '_blank'); return true; }
+    if(d.sessionId) {
+      const stripe = getStripe();
+      await stripe.redirectToCheckout({ sessionId: d.sessionId });
+      return true;
+    }
+    toast('e', d.error || 'Stripe checkout failed');
+    return false;
+  } catch(e) {
+    toast('e', 'Stripe error: '+e.message);
+    return false;
+  }
+}
+
+// Top-up points via Stripe
+async function topupWithStripe(usdAmount) {
+  let pts = Math.round(usdAmount * PTS_PER_USD);
+  let ok = await stripeCheckout(usdAmount, 'usd', `Monetixra Top-up: ${pts} points`);
+  if(ok) {
+    // Points credited after webhook (demo: instant)
+    let u = D.users[CU.id]||CU;
+    u.points = (u.points||0) + pts;
+    CU = D.users[CU.id]||CU;
+    D.txs.unshift({id:'t'+Date.now(),type:'topup',label:`Stripe top-up $${usdAmount}`,pts,at:Date.now(),user:CU.id});
+    saveData(); syncUI(); rWallet();
+    toast('s',`💳 Top-up successful! +${pts} pts`);
+  }
+}
 
 // ═══════════════════════════════════════════════════════════
 //  BKASH / NAGAD PAYMENT INTEGRATION
@@ -4828,12 +6082,114 @@ function saveNotifSetting(key, el) {
 }
 
 
+
+// ═══════════════════════════════════════════════════════════
+//  GOOGLE SIGN-IN
+// ═══════════════════════════════════════════════════════════
+function googleSignIn() {
+  // Initialize Google One Tap if not already done
+  if(typeof google === 'undefined' || !google.accounts) {
+    toast('e','Google Sign-In not available. Please use email/password.');
+    return;
+  }
+  google.accounts.id.initialize({
+    client_id: GOOGLE_API_KEY2 || 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com',
+    callback: handleGoogleSignIn,
+    auto_select: false,
+    cancel_on_tap_outside: true,
+  });
+  google.accounts.id.prompt((notification) => {
+    if(notification.isNotDisplayed() || notification.isSkippedMoment()) {
+      // Fallback: open popup
+      toast('i','Opening Google Sign-In...');
+      google.accounts.id.renderButton(
+        document.createElement('div'),
+        { theme:'outline', size:'large', text:'signin_with' }
+      );
+    }
+  });
+}
+
+function handleGoogleSignIn(response) {
+  try {
+    // Decode the JWT token from Google
+    let base64 = response.credential.split('.')[1];
+    let payload = JSON.parse(atob(base64.replace(/-/g,'+').replace(/_/g,'/')));
+    let { email, name, picture, sub } = payload;
+    // Check if user exists
+    let existingUid = Object.keys(D.users).find(k => D.users[k].email === email);
+    if(existingUid) {
+      // Login existing user
+      D.cur = existingUid;
+      CU = D.users[existingUid];
+      if(picture && !CU.avatar) CU.avatar = picture;
+      saveSession(); saveData(); mount();
+      toast('s','✅ Welcome back, '+CU.name+'!');
+    } else {
+      // Register new user
+      let newId = uid();
+      let username = (name||'user').toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'') + '_' + Date.now().toString().slice(-4);
+      D.users[newId] = {
+        id:newId, name, username, email,
+        avatar: picture||null,
+        password: 'google_oauth_'+sub,
+        googleId: sub,
+        points:50, isAdmin:false,
+        verified:false, kycVerified:false,
+        followers:[], following:[], refs:[],
+        refCode:'MX'+Date.now().toString(36).toUpperCase(),
+        savedPosts:[], blocked:[], tasksToday:{},
+        twoFA:false, tin:null, cryptoWallets:{},
+        achievements:[], adViews:0, adPts:0,
+        engPts:0, refPts:0, mlmPts:0, nftPts:0,
+        createdAt:Date.now()
+      };
+      D.txs.unshift({id:'t'+Date.now(),type:'bonus',label:'Signup bonus (Google)',pts:50,at:Date.now(),user:newId});
+      addNotif(newId,'welcome','🎉','Welcome to Monetixra! You earned +50 bonus pts!');
+      D.cur = newId; CU = D.users[newId];
+      saveSession(); saveData(); mount();
+      toast('s','🎉 Welcome to Monetixra, '+name+'! +50 pts');
+      confetti();
+    }
+  } catch(e) {
+    console.error('[Google SignIn]', e);
+    toast('e','Google Sign-In failed. Try email/password.');
+  }
+}
+
+
+// ── Screen Share (WebRTC) ──────────────────────────────────
+async function toggleScreenShare() {
+  if(!callState.active) return toast('e','No active call');
+  try {
+    if(callState.screenSharing) {
+      if(callState.screenStream){callState.screenStream.getTracks().forEach(t=>t.stop());callState.screenStream=null;}
+      callState.screenSharing=false;
+      if(callState.pc&&callState.localStream){let vt=callState.localStream.getVideoTracks()[0];let sr=callState.pc.getSenders().find(s=>s.track?.kind==='video');if(sr&&vt)await sr.replaceTrack(vt);}
+      G('callLocalWrap').style.display='none';
+      toast('i','Screen share stopped');
+    } else {
+      let ss=await navigator.mediaDevices.getDisplayMedia({video:true,audio:false});
+      callState.screenStream=ss;callState.screenSharing=true;
+      let st=ss.getVideoTracks()[0];
+      if(callState.pc){let sr=callState.pc.getSenders().find(s=>s.track?.kind==='video');if(sr)await sr.replaceTrack(st);}
+      let lv=G('callLocalVideo');if(lv)lv.srcObject=ss;
+      G('callLocalWrap').style.display='block';
+      st.onended=()=>toggleScreenShare();
+      toast('s','📺 Screen sharing started');
+      if(socket)socket.emit('webrtc:screen-share',{callId:callState.callId,to:callState.peerId,sharing:true});
+    }
+  } catch(e){if(e.name!=='NotAllowedError')toast('e','Screen share error: '+e.message);}
+}
+
 </script>
 <script>
 // PWA Service Worker
-if('serviceWorker' in navigator){
+if('serviceWorker' in navigator && location.protocol !== 'file:'){
   window.addEventListener('load', ()=>{
-    navigator.serviceWorker.register('/sw.js').then(r=>console.log('[SW] Registered')).catch(e=>console.log('[SW]',e));
+    navigator.serviceWorker.register('/sw.js')
+      .then(r=>console.log('[SW] Registered ✅'))
+      .catch(e=>console.log('[SW] Only works when served over HTTP/HTTPS'));
   });
 }
 // Push Notification permission

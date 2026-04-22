@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: mediaearn-ultra-x
+    name: monetixra
     env: node
     buildCommand: npm install
     startCommand: node server.js
