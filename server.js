@@ -937,6 +937,275 @@ app.delete('/api/admin/content/:id', async(req,res)=>{
   }
 });
 
+// ── Friends API Routes ──────────────────────────────────────────────
+// Get friends list (showing logged-in friends)
+app.get('/api/friends', async(req,res)=>{
+  try {
+    const userId = req.query.userId;
+    if(!userId) return res.status(400).json({error:'userId required'});
+    
+    // Get accepted friends
+    const friends = await supabaseRest('friends', 'GET', null, `user_id=eq.${encodeURIComponent(userId)}&status=eq.accepted&select=*`);
+    const friendIds = friends.map(f => f.friend_id);
+    
+    // Get friend details
+    const friendDetails = [];
+    for(const fid of friendIds) {
+      const user = await getPersistentUser(fid);
+      if(user) {
+        // Check if friend is online
+        const isOnline = Array.from(onlineSessions.values()).some(s => s.userId === fid);
+        friendDetails.push({...user, isOnline});
+      }
+    }
+    
+    res.json(friendDetails);
+  } catch(e) {
+    res.status(500).json({error: 'Failed to load friends', detail: e.message});
+  }
+});
+
+// Send friend request
+app.post('/api/friends/request', async(req,res)=>{
+  try {
+    const {userId, friendId} = req.body;
+    if(!userId || !friendId) return res.status(400).json({error:'userId and friendId required'});
+    
+    const friendData = {
+      id: `friend_${userId}_${friendId}_${Date.now()}`,
+      user_id: userId,
+      friend_id: friendId,
+      status: 'pending',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    
+    await supabaseRest('friends', 'POST', friendData);
+    res.json({success: true, status: 'pending'});
+  } catch(e) {
+    res.status(500).json({error: 'Failed to send friend request', detail: e.message});
+  }
+});
+
+// Accept friend request
+app.post('/api/friends/accept', async(req,res)=>{
+  try {
+    const {userId, friendId} = req.body;
+    if(!userId || !friendId) return res.status(400).json({error:'userId and friendId required'});
+    
+    await supabaseRest('friends', 'PATCH', {status: 'accepted', updated_at: new Date().toISOString()}, `user_id=eq.${encodeURIComponent(friendId)}&friend_id=eq.${encodeURIComponent(userId)}`);
+    res.json({success: true, status: 'accepted'});
+  } catch(e) {
+    res.status(500).json({error: 'Failed to accept friend request', detail: e.message});
+  }
+});
+
+// Remove friend
+app.delete('/api/friends/:friendId', async(req,res)=>{
+  try {
+    const userId = req.query.userId;
+    const friendId = req.params.friendId;
+    if(!userId || !friendId) return res.status(400).json({error:'userId and friendId required'});
+    
+    await supabaseRest('friends', 'DELETE', null, `user_id=eq.${encodeURIComponent(userId)}&friend_id=eq.${encodeURIComponent(friendId)}`);
+    res.json({success: true});
+  } catch(e) {
+    res.status(500).json({error: 'Failed to remove friend', detail: e.message});
+  }
+});
+
+// ── Daily Point Earning API Routes ──────────────────────────────────────
+// Get daily point earning status
+app.get('/api/daily-points', async(req,res)=>{
+  try {
+    const userId = req.query.userId;
+    if(!userId) return res.status(400).json({error:'userId required'});
+    
+    const today = new Date().toISOString().split('T')[0];
+    const earnings = await supabaseRest('daily_point_earnings', 'GET', null, `user_id=eq.${encodeURIComponent(userId)}&earned_date=eq.${today}&select=*`);
+    
+    const buttonStatus = {
+      '+2': {available: true, clicks: 0},
+      '+3': {available: true, clicks: 0},
+      '+5': {available: true, clicks: 0}
+    };
+    
+    earnings.forEach(e => {
+      if(e.click_count >= 3) {
+        buttonStatus[e.button_type] = {available: false, clicks: e.click_count};
+      } else {
+        buttonStatus[e.button_type] = {available: true, clicks: e.click_count};
+      }
+    });
+    
+    res.json(buttonStatus);
+  } catch(e) {
+    res.status(500).json({error: 'Failed to load daily points status', detail: e.message});
+  }
+});
+
+// Earn points by clicking button
+app.post('/api/daily-points/earn', async(req,res)=>{
+  try {
+    const {userId, buttonType} = req.body;
+    if(!userId || !buttonType) return res.status(400).json({error:'userId and buttonType required'});
+    
+    const points = parseInt(buttonType.replace('+', ''));
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Check today's clicks
+    const earnings = await supabaseRest('daily_point_earnings', 'GET', null, `user_id=eq.${encodeURIComponent(userId)}&earned_date=eq.${today}&button_type=eq.${buttonType}&select=*`);
+    
+    let clickCount = 0;
+    if(earnings.length > 0) {
+      clickCount = earnings[0].click_count || 0;
+    }
+    
+    if(clickCount >= 3) {
+      return res.status(400).json({error: 'Daily limit reached for this button'});
+    }
+    
+    // Add points
+    await creditUserPoints(userId, points, `Daily point earning (${buttonType})`, 'daily_earning');
+    
+    // Update or create earning record
+    const earningData = {
+      id: earnings.length > 0 ? earnings[0].id : `daily_${userId}_${buttonType}_${Date.now()}`,
+      user_id: userId,
+      points_earned: points,
+      button_type: buttonType,
+      earned_date: today,
+      click_count: clickCount + 1,
+      created_at: new Date().toISOString()
+    };
+    
+    await supabaseRest('daily_point_earnings', 'POST', earningData, 'on_conflict=id');
+    
+    res.json({success: true, points, remainingClicks: 3 - (clickCount + 1)});
+  } catch(e) {
+    res.status(500).json({error: 'Failed to earn points', detail: e.message});
+  }
+});
+
+// ── Ad Views API Routes ──────────────────────────────────────────────
+// Record ad view and award points
+app.post('/api/ad-views', async(req,res)=>{
+  try {
+    const {userId, adType, adContent, incomePercentage = 0.65} = req.body;
+    if(!userId || !adType) return res.status(400).json({error:'userId and adType required'});
+    
+    // Calculate points (60-70% of ad income as points)
+    const basePoints = adType === 'banner' ? 2 : adType === 'contextual' ? 3 : 5;
+    const pointsAwarded = Math.floor(basePoints * incomePercentage);
+    
+    // Award points
+    await creditUserPoints(userId, pointsAwarded, `Ad viewing (${adType})`, 'ad_income');
+    
+    // Record ad view
+    const adViewData = {
+      id: `adview_${userId}_${Date.now()}`,
+      user_id: userId,
+      ad_type: adType,
+      ad_content: adContent || '',
+      points_awarded: pointsAwarded,
+      income_percentage: incomePercentage,
+      created_at: new Date().toISOString()
+    };
+    
+    await supabaseRest('ad_views', 'POST', adViewData);
+    
+    res.json({success: true, pointsAwarded, incomePercentage});
+  } catch(e) {
+    res.status(500).json({error: 'Failed to record ad view', detail: e.message});
+  }
+});
+
+// ── Post Ads API Routes ──────────────────────────────────────────────
+// Get ads for posts (after every 3 posts)
+app.get('/api/post-ads', async(req,res)=>{
+  try {
+    const ads = await supabaseRest('post_ads', 'GET', null, 'active=eq.true&select=*');
+    res.json(ads);
+  } catch(e) {
+    res.status(500).json({error: 'Failed to load post ads', detail: e.message});
+  }
+});
+
+// Create post ad
+app.post('/api/post-ads', async(req,res)=>{
+  try {
+    const {postId, adContent, adType = 'banner', position = 0} = req.body;
+    if(!postId || !adContent) return res.status(400).json({error:'postId and adContent required'});
+    
+    const adData = {
+      id: `postad_${postId}_${Date.now()}`,
+      post_id: postId,
+      ad_content: adContent,
+      ad_type: adType,
+      position: position,
+      active: true,
+      created_at: new Date().toISOString()
+    };
+    
+    await supabaseRest('post_ads', 'POST', adData);
+    res.json({success: true, adData});
+  } catch(e) {
+    res.status(500).json({error: 'Failed to create post ad', detail: e.message});
+  }
+});
+
+// ── Enhanced Admin Dashboard ──────────────────────────────────────────────
+// Get real-time user statistics
+app.get('/api/admin/user-stats', async(req,res)=>{
+  try {
+    const totalUsers = syncStore.users.size;
+    const onlineUsers = new Set(Array.from(onlineSessions.values()).map(s => s.userId)).size;
+    const activeSessions = onlineSessions.size;
+    
+    // Get active users in last 24 hours (from database)
+    const activeUsers24h = await supabaseRest('users', 'GET', null, 'select=updated_at&updated_at=gte.' + new Date(Date.now() - 24*60*60*1000).toISOString());
+    
+    res.json({
+      totalUsers,
+      onlineUsers,
+      activeSessions,
+      activeUsers24h: activeUsers24h.length,
+      timestamp: new Date().toISOString()
+    });
+  } catch(e) {
+    res.status(500).json({error: 'Failed to load user stats', detail: e.message});
+  }
+});
+
+// Delete user post
+app.delete('/api/admin/posts/:postId', async(req,res)=>{
+  try {
+    const postId = req.params.postId;
+    await supabaseRest('posts', 'DELETE', null, `id=eq.${encodeURIComponent(postId)}`);
+    syncStore.posts.delete(postId);
+    updateIndexes();
+    res.json({success: true});
+  } catch(e) {
+    res.status(500).json({error: 'Failed to delete post', detail: e.message});
+  }
+});
+
+// Deactivate user account
+app.post('/api/admin/users/:userId/deactivate', async(req,res)=>{
+  try {
+    const userId = req.params.userId;
+    await supabaseRest('users', 'PATCH', {deactivated: true, updated_at: new Date().toISOString()}, `id=eq.${encodeURIComponent(userId)}`);
+    
+    if(syncStore.users.has(userId)) {
+      syncStore.users.get(userId).deactivated = true;
+    }
+    
+    res.json({success: true});
+  } catch(e) {
+    res.status(500).json({error: 'Failed to deactivate user', detail: e.message});
+  }
+});
+
 // ── Data Persistence API Routes ───────────────────────────────────────────
 // Sync posts
 app.post('/api/posts/sync', async(req,res)=>{

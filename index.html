@@ -163,6 +163,8 @@ window.atOptions_468x60 = {
 <script defer src="js/live-streaming-fixed.js"></script>
 <script defer src="js/ad-system-enhanced.js"></script>
 <script defer src="js/data-test.js"></script>
+<!-- New Features -->
+<script defer src="js/friends-system.js"></script>
 
 <!-- ─── AD CONFIGURATION ─────────────────────────────────
   Replace values below with your real keys to activate ads
@@ -1902,6 +1904,10 @@ body.light-theme .top-bar { background:#ffffff; border-bottom:1px solid rgba(0,0
       <div class="eh-btn" onclick="watchAd()"><div class="ei">📺</div><div class="el">Watch Ad</div></div>
     </div>
   </div>
+  <div class="section-label">🎯 Daily Point Earning (3x per day)</div>
+  <div class="point-earn-buttons" id="pointEarnButtons" style="display:flex;gap:10px;margin-bottom:12px;">
+    <!-- Buttons will be rendered by JavaScript -->
+  </div>
   <div class="section-label">📋 Daily Tasks</div>
   <div id="dailyTasks"></div>
   <div class="section-label">🏅 Missions & Achievements</div>
@@ -2030,15 +2036,16 @@ body.light-theme .top-bar { background:#ffffff; border-bottom:1px solid rgba(0,0
 <div class="pg" id="pg-friends">
   <div class="friend-hero">
     <div style="font-size:42px;">👥</div>
-    <div style="font-family:var(--fd);font-size:17px;font-weight:800;">Auto Friends</div>
-    <div style="font-size:12px;">Anyone who views your content becomes auto friend!</div>
+    <div style="font-family:var(--fd);font-size:17px;font-weight:800;">Friends</div>
+    <div style="font-size:12px;">Connect with friends who are online!</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px;">
       <div style="background:var(--g2);border-radius:12px;padding:11px;"><div class="mono neon" id="totalAutoFriends">0</div><div>Auto Friends</div></div>
       <div style="background:var(--g2);border-radius:12px;padding:11px;"><div class="mono" style="color:var(--c4);" id="totalViewers">0</div><div>Viewers</div></div>
     </div>
   </div>
   <div class="chips" style="margin-bottom:10px;">
-    <div class="chip on" onclick="friendsTab('auto',this)">✨ Auto Friends</div>
+    <div class="chip on" onclick="friendsTab('friends',this)">👥 My Friends</div>
+    <div class="chip" onclick="friendsTab('auto',this)">✨ Auto Friends</div>
     <div class="chip" onclick="friendsTab('viewers',this)">👁️ Viewers</div>
     <div class="chip" onclick="friendsTab('following',this)">➕ Following</div>
     <div class="chip" onclick="friendsTab('followers',this)">👤 Followers</div>
@@ -2885,11 +2892,16 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
     <input type="file" id="postFileIn" style="display:none" onchange="previewPostFile(this)">
     <div class="ai-panel" id="aiPanelSection" style="display:none;">
+      <div class="media-type-selector" id="mediaTypeSelector">
+        <button class="media-type-btn active" onclick="AICaptionSystem.setMediaType('photo')">📷 Photo</button>
+        <button class="media-type-btn" onclick="AICaptionSystem.setMediaType('video')">🎬 Video</button>
+        <button class="media-type-btn" onclick="AICaptionSystem.setMediaType('audio')">🎵 Audio</button>
+      </div>
       <div class="h-scroll-ltr">
-        <div class="media-chip ai-chip" onclick="aiGenerateCaption()">✨ AI Caption</div>
-        <div class="media-chip ai-chip" onclick="aiSuggestHashtags()">🏷️ Hashtags</div>
-        <div class="media-chip ai-chip" onclick="aiDetectObjects()">👁️ Detect Objects</div>
-        <div class="media-chip ai-chip" onclick="aiTranslate()">🌐 Translate</div>
+        <div class="media-chip ai-chip" onclick="AICaptionSystem.generateCaption(AICaptionSystem.currentMediaType, currentPostFileData)">✨ AI Caption</div>
+        <div class="media-chip ai-chip" onclick="AICaptionSystem.generateHashtags(G('postText').value, AICaptionSystem.currentMediaType)">🏷️ Hashtags</div>
+        <div class="media-chip ai-chip" onclick="AICaptionSystem.detectObjects(currentPostFileData)">👁️ Detect Objects</div>
+        <div class="media-chip ai-chip" onclick="AICaptionSystem.translateText(G('postText').value, 'en')">🌐 Translate</div>
         <div class="media-chip ai-chip" onclick="aiGenerateImage()">🎨 AI Image</div>
         <div class="media-chip ai-chip" onclick="aiSummarize()">📄 Summarize</div>
         <div class="media-chip ai-chip" onclick="aiSpellCheck()">🔍 Spell Check</div>
@@ -6095,7 +6107,18 @@ function addNotif(toId, type, icon, msg, refId='') { D.notifs=D.notifs||[]; D.no
 
 // Earn Page (simplified for brevity - kept essential functions)
 const DAILY_TASKS=[{ id:'dt1', ico:'📺', name:'Watch Ad', desc:'Earn pts', pts:5, fn:()=>watchAd() },{ id:'dt2', ico:'❤️', name:'Like 3 Posts', desc:'Engage', pts:3, fn:()=>{ addPts(3,'Like Task'); toast('s','+3 pts!'); } },{ id:'dt3', ico:'💬', name:'Comment', desc:'Leave a comment', pts:2, fn:()=>{ addPts(2,'Comment Task'); toast('s','+2 pts!'); } },{ id:'dt4', ico:'📝', name:'Create Post', desc:'Share content', pts:2, fn:()=>openPostModal() },{ id:'dt5', ico:'🔗', name:'Share Post', desc:'Share with friends', pts:3, fn:()=>{ addPts(3,'Share Task'); toast('s','+3 pts!'); } }];
-function rEarn() { syncUI(); let dt=G('dailyTasks'); if(dt){ let today=new Date().toDateString(); dt.innerHTML=DAILY_TASKS.map(t=>{ let done=CU?.tasksToday?.[t.id]===today; return `<div class="task-card"><div class="task-ico">${t.ico}</div><div class="task-info"><div class="task-name">${t.name}</div><div class="task-desc">${t.desc}</div></div><div class="task-reward">+${t.pts}</div><button class="btn ${done?'btn-ghost':'btn-p'} btn-xs" ${done?'disabled':''} onclick="doTask('${t.id}')">${done?'✅ Done':'Go'}</button></div>`; }).join(''); } }
+function rEarn() { syncUI(); let dt=G('dailyTasks'); if(dt){ let today=new Date().toDateString(); dt.innerHTML=DAILY_TASKS.map(t=>{ let done=CU?.tasksToday?.[t.id]===today; return `<div class="task-card"><div class="task-ico">${t.ico}</div><div class="task-info"><div class="task-name">${t.name}</div><div class="task-desc">${t.desc}</div></div><div class="task-reward">+${t.pts}</div><button class="btn ${done?'btn-ghost':'btn-p'} btn-xs" ${done?'disabled':''} onclick="doTask('${t.id}')">${done?'✅ Done':'Go'}</button></div>`; }).join(''); }
+  
+  // Render daily point earning buttons
+  if(typeof DailyPointsSystem !== 'undefined') {
+    DailyPointsSystem.loadButtonStatus(CU.id).then(() => {
+      const btnContainer = G('pointEarnButtons');
+      if(btnContainer) {
+        btnContainer.innerHTML = DailyPointsSystem.renderPointButtons();
+      }
+    });
+  }
+}
 function doTask(tid) { let t=DAILY_TASKS.find(x=>x.id===tid); if(!t||!CU) return; CU.tasksToday=CU.tasksToday||{}; let today=new Date().toDateString(); if(CU.tasksToday[tid]===today){ toast('w','Already done'); return; } CU.tasksToday[tid]=today; t.fn(); saveData(); rEarn(); 
   // MAX AD SYSTEM: Show interactive ad after task completion (high engagement)
   if (typeof MAX_AD_SYSTEM !== 'undefined' && Math.random() > 0.6) {
@@ -6236,8 +6259,28 @@ function saveProfile() {
 function shareProfile() { navigator.clipboard?.writeText(location.href); toast('s','Link copied!'); }
 
 // Friends Page
-function rFriends() { updateFriendsBadge(); if(!CU) return; G('totalAutoFriends').textContent=(CU.autoFriends||[]).length; G('totalViewers').textContent=(CU.viewers||[]).length; friendsTab('auto',null); }
-function friendsTab(tab,el) { document.querySelectorAll('#pg-friends .chip').forEach(c=>c.classList.remove('on')); if(el) el.classList.add('on'); let list=G('friendsList'); if(!list||!CU) return; if(tab==='discover'){ let q=(G('friendSearch')?.value||'').toLowerCase(); let users=Object.values(D.users).filter(u=>u.id!==CU.id && !u.isAdmin && (!q || (u.name||'').toLowerCase().includes(q) || (u.username||'').toLowerCase().includes(q))).slice(0,30); list.innerHTML=users.length?users.map(u=>{ let linked=(CU.following||[]).includes(u.id)||(CU.autoFriends||[]).includes(u.id)||(CU.forceFollowed||[]).includes(u.id); let grad=randomGrad(); return `<div class="friend-card"><div class="fc-av" style="background:linear-gradient(135deg,${grad[0]},${grad[1]});">${u.avatar?`<img src="${u.avatar}">`:u.name?.charAt(0).toUpperCase()}</div><div class="fc-info"><div class="fc-nm">${esc(u.name||'User')}</div><div class="fc-sub">@${esc(u.username||'')} · ${u.points||0} pts</div></div><div class="fc-actions"><button class="btn ${linked?'btn-ghost':'btn-p'} btn-xs" onclick="${linked?`openChat('${u.id}')`:`permanentFollow('${u.id}')`}">${linked?'Message':'Add Friend'}</button></div></div>`; }).join(''):'<div style="padding:40px 20px;text-align:center;color:var(--t3);">No users found</div>'; return; } let uids=tab==='auto'?(CU.autoFriends||[]):(tab==='viewers'?(CU.viewers||[]):(tab==='following'?(CU.following||[]):(CU.followers||[]))); list.innerHTML=''; if(!uids.length){
+function rFriends() { 
+  updateFriendsBadge(); 
+  if(!CU) return; 
+  G('totalAutoFriends').textContent=(CU.autoFriends||[]).length; 
+  G('totalViewers').textContent=(CU.viewers||[]).length; 
+  
+  // Load friends from new system
+  if(typeof FriendsSystem !== 'undefined') {
+    FriendsSystem.loadFriends(CU.id).then(() => {
+      friendsTab('friends', null);
+    });
+  } else {
+    friendsTab('auto', null);
+  }
+}
+function friendsTab(tab,el) { document.querySelectorAll('#pg-friends .chip').forEach(c=>c.classList.remove('on')); if(el) el.classList.add('on'); let list=G('friendsList'); if(!list||!CU) return; 
+  // Handle new friends tab
+  if(tab==='friends' && typeof FriendsSystem !== 'undefined') {
+    list.innerHTML = FriendsSystem.renderFriendsList();
+    return;
+  }
+  if(tab==='discover'){ let q=(G('friendSearch')?.value||'').toLowerCase(); let users=Object.values(D.users).filter(u=>u.id!==CU.id && !u.isAdmin && (!q || (u.name||'').toLowerCase().includes(q) || (u.username||'').toLowerCase().includes(q))).slice(0,30); list.innerHTML=users.length?users.map(u=>{ let linked=(CU.following||[]).includes(u.id)||(CU.autoFriends||[]).includes(u.id)||(CU.forceFollowed||[]).includes(u.id); let grad=randomGrad(); return `<div class="friend-card"><div class="fc-av" style="background:linear-gradient(135deg,${grad[0]},${grad[1]});">${u.avatar?`<img src="${u.avatar}">`:u.name?.charAt(0).toUpperCase()}</div><div class="fc-info"><div class="fc-nm">${esc(u.name||'User')}</div><div class="fc-sub">@${esc(u.username||'')} · ${u.points||0} pts</div></div><div class="fc-actions"><button class="btn ${linked?'btn-ghost':'btn-p'} btn-xs" onclick="${linked?`openChat('${u.id}')`:`permanentFollow('${u.id}')`}">${linked?'Message':'Add Friend'}</button></div></div>`; }).join(''):'<div style="padding:40px 20px;text-align:center;color:var(--t3);">No users found</div>'; return; } let uids=tab==='auto'?(CU.autoFriends||[]):(tab==='viewers'?(CU.viewers||[]):(tab==='following'?(CU.following||[]):(CU.followers||[]))); list.innerHTML=''; if(!uids.length){
   list.innerHTML='<div style="padding:40px 20px;text-align:center;color:var(--t3);"><div style="font-size:32px;margin-bottom:8px;">👥</div><div>No connections yet.<br>Post content to connect with others!</div></div>';
   return;
 } uids.forEach(uid=>{ let u=D.users[uid]; if(!u) return; let grad=randomGrad(); let actions = `<button class="btn btn-p btn-xs" onclick="openChat('${uid}')" title="Chat">💬</button><button class="btn btn-s btn-xs" onclick="startCall('${uid}','audio')" title="Audio Call">📞</button><button class="btn btn-s btn-xs" onclick="startCall('${uid}','video')" title="Video Call">📹</button><button class="btn btn-s btn-xs" onclick="sendSMS('${uid}')" title="SMS">📩</button>`; if(tab==='followers'){ actions += `<button class="btn btn-e btn-xs" onclick="removeFollower('${uid}')" title="Remove follower">✂️</button>`; } else { actions += `<button class="btn btn-r btn-xs" onclick="removeFriend('${uid}')" title="Remove friend">Remove</button>`; } list.innerHTML+=`<div class="friend-card"><div class="fc-av" style="background:linear-gradient(135deg,${grad[0]},${grad[1]});">${u.avatar?`<img src="${u.avatar}">`:u.name?.charAt(0).toUpperCase()}</div><div class="fc-info"><div class="fc-nm">${esc(u.name)} ${u.verified?'<span class="badge b-ver">✔</span>':''} ${u.kycVerified?'<span class="badge b-kyc">✅</span>':''}</div><div class="fc-sub">@${esc(u.username||'')} · ${u.points||0} pts</div></div><div class="fc-actions">${actions}</div></div>`; }); }
@@ -9142,6 +9185,29 @@ window.addEventListener('load', async () => {
   try {
     if(typeof initData === 'function') initData();
     if(typeof loadData === 'function') await loadData();
+    
+    // Initialize new features
+    if(typeof CU !== 'undefined' && CU && CU.id) {
+      // Load friends
+      if(typeof FriendsSystem !== 'undefined') {
+        FriendsSystem.loadFriends(CU.id);
+      }
+      
+      // Load daily point button status
+      if(typeof DailyPointsSystem !== 'undefined') {
+        DailyPointsSystem.loadButtonStatus(CU.id);
+      }
+      
+      // Load post ads
+      if(typeof AdSystem !== 'undefined') {
+        AdSystem.loadPostAds();
+      }
+      
+      // If admin, load user stats
+      if(CU.is_admin && typeof AdminDashboard !== 'undefined') {
+        AdminDashboard.loadUserStats();
+      }
+    }
     if(typeof loadSession === 'function') loadSession();
     if(typeof syncCU === 'function') syncCU();
     
