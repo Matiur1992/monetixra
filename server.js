@@ -620,19 +620,33 @@ app.post('/api/ai/vision', async(req,res)=>{
 });
 
 // ── Enhanced Translation API ────────────────────────────────────────────────
+async function googleTranslate(q, targetLanguage='en', sourceLanguage='auto') {
+  if(!GOOGLE_KEY) return {translated:q, translatedText:q, sourceLanguage, targetLanguage, configured:false};
+  const payload = {q, target:targetLanguage, format:'text'};
+  if(sourceLanguage && sourceLanguage !== 'auto') payload.source = sourceLanguage;
+  const r = await fetch(`https://translation.googleapis.com/language/translate/v2?key=${GOOGLE_KEY}`, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(payload)
+  });
+  const d = await r.json();
+  if(!r.ok) throw new Error(d.error?.message || 'Google Translate failed');
+  const first = d.data?.translations?.[0] || {};
+  return {
+    translated:first.translatedText || q,
+    translatedText:first.translatedText || q,
+    sourceLanguage:first.detectedSourceLanguage || sourceLanguage,
+    targetLanguage,
+    configured:true
+  };
+}
+
 app.post('/api/ai/translate', async(req,res)=>{
   const {text='', targetLanguage='en', sourceLanguage='auto'}=req.body;
   if(!text) return res.status(400).json({error:'text required'});
   
   try {
-    const r=await fetch(`https://translation.googleapis.com/language/translate/v2?key=${GOOGLE_KEY}`,{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({q:text,target:targetLanguage,source:sourceLanguage,format:'text'})
-    });
-    const d=await r.json();
-    const translatedText = d.data?.translations?.[0]?.translatedText||text;
-    const detectedSourceLanguage = d.data?.translations?.[0]?.detectedSourceLanguage||sourceLanguage;
-    res.json({translatedText, sourceLanguage:detectedSourceLanguage, targetLanguage});
+    res.json(await googleTranslate(text, targetLanguage, sourceLanguage));
   }catch(e){ 
     console.error('Translation error:', e);
     res.json({translatedText:text, sourceLanguage:sourceLanguage, targetLanguage}); 
@@ -641,16 +655,34 @@ app.post('/api/ai/translate', async(req,res)=>{
 
 // ── Google Translate ──────────────────────────────────────────
 app.post('/api/translate', async(req,res)=>{
-  const {text,target='en'}=req.body;
+  const {text,target='en',targetLanguage,sourceLanguage='auto'}=req.body;
   if(!text) return res.status(400).json({error:'text required'});
   try {
-    const r=await fetch(`https://translation.googleapis.com/language/translate/v2?key=${GOOGLE_KEY}`,{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({q:text,target,format:'text'})
+    res.json(await googleTranslate(text, targetLanguage || target, sourceLanguage));
+  }catch(e){ res.json({error:'Translation failed', detail:e.message, translated:text, translatedText:text}); }
+});
+
+app.post('/api/translate/batch', async(req,res)=>{
+  const {texts=[], target='en', targetLanguage, sourceLanguage='auto'} = req.body || {};
+  const list = Array.isArray(texts) ? texts.slice(0, 100) : [];
+  if(!list.length) return res.status(400).json({error:'texts required'});
+  const lang = targetLanguage || target;
+  try {
+    if(!GOOGLE_KEY) return res.json({translations:list, translated:list, configured:false});
+    const payload = {q:list, target:lang, format:'text'};
+    if(sourceLanguage && sourceLanguage !== 'auto') payload.source = sourceLanguage;
+    const r = await fetch(`https://translation.googleapis.com/language/translate/v2?key=${GOOGLE_KEY}`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload)
     });
-    const d=await r.json();
-    res.json({translated:d.data?.translations?.[0]?.translatedText||text});
-  }catch(e){ res.status(500).json({error:'Translation failed'}); }
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.error?.message || 'Google Translate batch failed');
+    const translations = (d.data?.translations || []).map((x,i) => x.translatedText || list[i]);
+    res.json({translations, translated:translations, targetLanguage:lang, configured:true});
+  } catch(e) {
+    res.json({error:'Batch translation failed', detail:e.message, translations:list, translated:list});
+  }
 });
 
 // ── Google Vision ─────────────────────────────────────────────
@@ -937,275 +969,6 @@ app.delete('/api/admin/content/:id', async(req,res)=>{
   }
 });
 
-// ── Friends API Routes ──────────────────────────────────────────────
-// Get friends list (showing logged-in friends)
-app.get('/api/friends', async(req,res)=>{
-  try {
-    const userId = req.query.userId;
-    if(!userId) return res.status(400).json({error:'userId required'});
-    
-    // Get accepted friends
-    const friends = await supabaseRest('friends', 'GET', null, `user_id=eq.${encodeURIComponent(userId)}&status=eq.accepted&select=*`);
-    const friendIds = friends.map(f => f.friend_id);
-    
-    // Get friend details
-    const friendDetails = [];
-    for(const fid of friendIds) {
-      const user = await getPersistentUser(fid);
-      if(user) {
-        // Check if friend is online
-        const isOnline = Array.from(onlineSessions.values()).some(s => s.userId === fid);
-        friendDetails.push({...user, isOnline});
-      }
-    }
-    
-    res.json(friendDetails);
-  } catch(e) {
-    res.status(500).json({error: 'Failed to load friends', detail: e.message});
-  }
-});
-
-// Send friend request
-app.post('/api/friends/request', async(req,res)=>{
-  try {
-    const {userId, friendId} = req.body;
-    if(!userId || !friendId) return res.status(400).json({error:'userId and friendId required'});
-    
-    const friendData = {
-      id: `friend_${userId}_${friendId}_${Date.now()}`,
-      user_id: userId,
-      friend_id: friendId,
-      status: 'pending',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-    
-    await supabaseRest('friends', 'POST', friendData);
-    res.json({success: true, status: 'pending'});
-  } catch(e) {
-    res.status(500).json({error: 'Failed to send friend request', detail: e.message});
-  }
-});
-
-// Accept friend request
-app.post('/api/friends/accept', async(req,res)=>{
-  try {
-    const {userId, friendId} = req.body;
-    if(!userId || !friendId) return res.status(400).json({error:'userId and friendId required'});
-    
-    await supabaseRest('friends', 'PATCH', {status: 'accepted', updated_at: new Date().toISOString()}, `user_id=eq.${encodeURIComponent(friendId)}&friend_id=eq.${encodeURIComponent(userId)}`);
-    res.json({success: true, status: 'accepted'});
-  } catch(e) {
-    res.status(500).json({error: 'Failed to accept friend request', detail: e.message});
-  }
-});
-
-// Remove friend
-app.delete('/api/friends/:friendId', async(req,res)=>{
-  try {
-    const userId = req.query.userId;
-    const friendId = req.params.friendId;
-    if(!userId || !friendId) return res.status(400).json({error:'userId and friendId required'});
-    
-    await supabaseRest('friends', 'DELETE', null, `user_id=eq.${encodeURIComponent(userId)}&friend_id=eq.${encodeURIComponent(friendId)}`);
-    res.json({success: true});
-  } catch(e) {
-    res.status(500).json({error: 'Failed to remove friend', detail: e.message});
-  }
-});
-
-// ── Daily Point Earning API Routes ──────────────────────────────────────
-// Get daily point earning status
-app.get('/api/daily-points', async(req,res)=>{
-  try {
-    const userId = req.query.userId;
-    if(!userId) return res.status(400).json({error:'userId required'});
-    
-    const today = new Date().toISOString().split('T')[0];
-    const earnings = await supabaseRest('daily_point_earnings', 'GET', null, `user_id=eq.${encodeURIComponent(userId)}&earned_date=eq.${today}&select=*`);
-    
-    const buttonStatus = {
-      '+2': {available: true, clicks: 0},
-      '+3': {available: true, clicks: 0},
-      '+5': {available: true, clicks: 0}
-    };
-    
-    earnings.forEach(e => {
-      if(e.click_count >= 3) {
-        buttonStatus[e.button_type] = {available: false, clicks: e.click_count};
-      } else {
-        buttonStatus[e.button_type] = {available: true, clicks: e.click_count};
-      }
-    });
-    
-    res.json(buttonStatus);
-  } catch(e) {
-    res.status(500).json({error: 'Failed to load daily points status', detail: e.message});
-  }
-});
-
-// Earn points by clicking button
-app.post('/api/daily-points/earn', async(req,res)=>{
-  try {
-    const {userId, buttonType} = req.body;
-    if(!userId || !buttonType) return res.status(400).json({error:'userId and buttonType required'});
-    
-    const points = parseInt(buttonType.replace('+', ''));
-    const today = new Date().toISOString().split('T')[0];
-    
-    // Check today's clicks
-    const earnings = await supabaseRest('daily_point_earnings', 'GET', null, `user_id=eq.${encodeURIComponent(userId)}&earned_date=eq.${today}&button_type=eq.${buttonType}&select=*`);
-    
-    let clickCount = 0;
-    if(earnings.length > 0) {
-      clickCount = earnings[0].click_count || 0;
-    }
-    
-    if(clickCount >= 3) {
-      return res.status(400).json({error: 'Daily limit reached for this button'});
-    }
-    
-    // Add points
-    await creditUserPoints(userId, points, `Daily point earning (${buttonType})`, 'daily_earning');
-    
-    // Update or create earning record
-    const earningData = {
-      id: earnings.length > 0 ? earnings[0].id : `daily_${userId}_${buttonType}_${Date.now()}`,
-      user_id: userId,
-      points_earned: points,
-      button_type: buttonType,
-      earned_date: today,
-      click_count: clickCount + 1,
-      created_at: new Date().toISOString()
-    };
-    
-    await supabaseRest('daily_point_earnings', 'POST', earningData, 'on_conflict=id');
-    
-    res.json({success: true, points, remainingClicks: 3 - (clickCount + 1)});
-  } catch(e) {
-    res.status(500).json({error: 'Failed to earn points', detail: e.message});
-  }
-});
-
-// ── Ad Views API Routes ──────────────────────────────────────────────
-// Record ad view and award points
-app.post('/api/ad-views', async(req,res)=>{
-  try {
-    const {userId, adType, adContent, incomePercentage = 0.65} = req.body;
-    if(!userId || !adType) return res.status(400).json({error:'userId and adType required'});
-    
-    // Calculate points (60-70% of ad income as points)
-    const basePoints = adType === 'banner' ? 2 : adType === 'contextual' ? 3 : 5;
-    const pointsAwarded = Math.floor(basePoints * incomePercentage);
-    
-    // Award points
-    await creditUserPoints(userId, pointsAwarded, `Ad viewing (${adType})`, 'ad_income');
-    
-    // Record ad view
-    const adViewData = {
-      id: `adview_${userId}_${Date.now()}`,
-      user_id: userId,
-      ad_type: adType,
-      ad_content: adContent || '',
-      points_awarded: pointsAwarded,
-      income_percentage: incomePercentage,
-      created_at: new Date().toISOString()
-    };
-    
-    await supabaseRest('ad_views', 'POST', adViewData);
-    
-    res.json({success: true, pointsAwarded, incomePercentage});
-  } catch(e) {
-    res.status(500).json({error: 'Failed to record ad view', detail: e.message});
-  }
-});
-
-// ── Post Ads API Routes ──────────────────────────────────────────────
-// Get ads for posts (after every 3 posts)
-app.get('/api/post-ads', async(req,res)=>{
-  try {
-    const ads = await supabaseRest('post_ads', 'GET', null, 'active=eq.true&select=*');
-    res.json(ads);
-  } catch(e) {
-    res.status(500).json({error: 'Failed to load post ads', detail: e.message});
-  }
-});
-
-// Create post ad
-app.post('/api/post-ads', async(req,res)=>{
-  try {
-    const {postId, adContent, adType = 'banner', position = 0} = req.body;
-    if(!postId || !adContent) return res.status(400).json({error:'postId and adContent required'});
-    
-    const adData = {
-      id: `postad_${postId}_${Date.now()}`,
-      post_id: postId,
-      ad_content: adContent,
-      ad_type: adType,
-      position: position,
-      active: true,
-      created_at: new Date().toISOString()
-    };
-    
-    await supabaseRest('post_ads', 'POST', adData);
-    res.json({success: true, adData});
-  } catch(e) {
-    res.status(500).json({error: 'Failed to create post ad', detail: e.message});
-  }
-});
-
-// ── Enhanced Admin Dashboard ──────────────────────────────────────────────
-// Get real-time user statistics
-app.get('/api/admin/user-stats', async(req,res)=>{
-  try {
-    const totalUsers = syncStore.users.size;
-    const onlineUsers = new Set(Array.from(onlineSessions.values()).map(s => s.userId)).size;
-    const activeSessions = onlineSessions.size;
-    
-    // Get active users in last 24 hours (from database)
-    const activeUsers24h = await supabaseRest('users', 'GET', null, 'select=updated_at&updated_at=gte.' + new Date(Date.now() - 24*60*60*1000).toISOString());
-    
-    res.json({
-      totalUsers,
-      onlineUsers,
-      activeSessions,
-      activeUsers24h: activeUsers24h.length,
-      timestamp: new Date().toISOString()
-    });
-  } catch(e) {
-    res.status(500).json({error: 'Failed to load user stats', detail: e.message});
-  }
-});
-
-// Delete user post
-app.delete('/api/admin/posts/:postId', async(req,res)=>{
-  try {
-    const postId = req.params.postId;
-    await supabaseRest('posts', 'DELETE', null, `id=eq.${encodeURIComponent(postId)}`);
-    syncStore.posts.delete(postId);
-    updateIndexes();
-    res.json({success: true});
-  } catch(e) {
-    res.status(500).json({error: 'Failed to delete post', detail: e.message});
-  }
-});
-
-// Deactivate user account
-app.post('/api/admin/users/:userId/deactivate', async(req,res)=>{
-  try {
-    const userId = req.params.userId;
-    await supabaseRest('users', 'PATCH', {deactivated: true, updated_at: new Date().toISOString()}, `id=eq.${encodeURIComponent(userId)}`);
-    
-    if(syncStore.users.has(userId)) {
-      syncStore.users.get(userId).deactivated = true;
-    }
-    
-    res.json({success: true});
-  } catch(e) {
-    res.status(500).json({error: 'Failed to deactivate user', detail: e.message});
-  }
-});
-
 // ── Data Persistence API Routes ───────────────────────────────────────────
 // Sync posts
 app.post('/api/posts/sync', async(req,res)=>{
@@ -1288,17 +1051,84 @@ app.post('/api/withdrawals/request', async(req,res)=>{
     const {userId, amount, method='bkash', account=''} = req.body || {};
     const amt = Math.trunc(Number(amount || 0));
     if(!userId || amt <= 0 || !account) return res.status(400).json({error:'userId, amount and account required'});
-    const user = await getPersistentUser(userId);
+    let user = null;
+    let persistentReady = true;
+    try {
+      user = await getPersistentUser(userId);
+    } catch(e) {
+      persistentReady = false;
+      user = syncStore.users.get(userId) || null;
+    }
     if(!user) return res.status(404).json({error:'User not found'});
-    if(!user.kyc_verified) return res.status(403).json({error:'KYC verification required'});
+    if(!(user.kyc_verified || user.kycVerified)) return res.status(403).json({error:'KYC verification required'});
     if(Number(user.points || 0) < amt) return res.status(400).json({error:'Insufficient points'});
     const wd = {id:'wd_' + Date.now() + '_' + crypto.randomBytes(4).toString('hex'), user_id:userId, amount:amt, method, account, status:'pending', created_at:new Date().toISOString()};
-    await supabaseRest('withdrawals', 'POST', wd, 'on_conflict=id', 'resolution=ignore-duplicates,return=representation');
-    await creditUserPoints(userId, -amt, `Withdrawal request via ${method}`, 'withdraw', 'withdraw_' + wd.id);
+    if(persistentReady) {
+      await supabaseRest('withdrawals', 'POST', wd, 'on_conflict=id', 'resolution=ignore-duplicates,return=representation');
+      await creditUserPoints(userId, -amt, `Withdrawal request via ${method}`, 'withdraw', 'withdraw_' + wd.id);
+    } else {
+      const nextPoints = Math.max(0, Number(user.points || 0) - amt);
+      user.points = nextPoints;
+      syncStore.users.set(userId, user);
+      syncStore.points.set(userId, {
+        ...(syncStore.points.get(userId) || {}),
+        points: nextPoints,
+        updatedAt: Date.now(),
+        history: [...(syncStore.points.get(userId)?.history || []).slice(-49), {points:-amt,label:`Withdrawal request via ${method}`,at:Date.now()}]
+      });
+    }
     syncStore.backups.unshift({id:wd.id, at:Date.now(), type:'withdrawal', data:wd});
-    res.json({success:true, withdrawal:wd});
+    res.json({success:true, withdrawal:wd, persisted:persistentReady});
   } catch(e) {
     res.status(500).json({error:'Withdrawal request failed', detail:e.message});
+  }
+});
+
+app.get('/api/admin/withdrawals', async(req,res)=>{
+  try {
+    let rows = [];
+    try {
+      rows = await supabaseRest('withdrawals', 'GET', null, 'select=*&order=created_at.desc&limit=200');
+    } catch(e) {
+      rows = syncStore.backups.filter(x => x.type === 'withdrawal').map(x => x.data).sort((a,b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+    }
+    res.json({success:true, withdrawals:rows});
+  } catch(e) {
+    res.status(500).json({error:'Failed to load withdrawals', detail:e.message});
+  }
+});
+
+app.post('/api/admin/withdrawals/:id/:action', async(req,res)=>{
+  try {
+    const {id, action} = req.params;
+    if(!['approve','reject'].includes(action)) return res.status(400).json({error:'action must be approve or reject'});
+    const status = action === 'approve' ? 'approved' : 'rejected';
+    const stamp = action === 'approve' ? 'approved_at' : 'rejected_at';
+    let wd = null;
+    try {
+      const rows = await supabaseRest('withdrawals', 'GET', null, `id=eq.${encodeURIComponent(id)}&select=*`);
+      wd = Array.isArray(rows) ? rows[0] : null;
+      if(!wd) return res.status(404).json({error:'Withdrawal not found'});
+      await supabaseRest('withdrawals', 'PATCH', {status, [stamp]:new Date().toISOString()}, `id=eq.${encodeURIComponent(id)}`, 'return=representation');
+      if(action === 'reject') await creditUserPoints(wd.user_id, Number(wd.amount || 0), 'Withdrawal rejected refund', 'withdraw_refund', 'refund_' + id);
+    } catch(e) {
+      const entry = syncStore.backups.find(x => x.type === 'withdrawal' && x.id === id);
+      wd = entry?.data;
+      if(!wd) return res.status(404).json({error:'Withdrawal not found'});
+      wd.status = status;
+      wd[stamp] = new Date().toISOString();
+      if(action === 'reject') {
+        const user = syncStore.users.get(wd.user_id);
+        if(user) {
+          user.points = Number(user.points || 0) + Number(wd.amount || 0);
+          syncStore.users.set(wd.user_id, user);
+          syncStore.points.set(wd.user_id, {...(syncStore.points.get(wd.user_id) || {}), points:user.points, updatedAt:Date.now()});
+        }
+      }
+    }
+    res.json({success:true, withdrawal:{...wd, status}});
+  } catch(e) {
+    res.status(500).json({error:'Withdrawal update failed', detail:e.message});
   }
 });
 
@@ -1308,6 +1138,16 @@ app.post('/api/media/sync', async(req,res)=>{
     const mediaData = req.body;
     if(!mediaData || !mediaData.id) return res.status(400).json({error:'media id required'});
     syncStore.media.set(mediaData.id, {...(syncStore.media.get(mediaData.id)||{}), ...mediaData, syncedAt:Date.now()});
+    supabaseRest('media_objects', 'POST', {
+      id:mediaData.id,
+      user_id:mediaData.userId || mediaData.user_id || null,
+      post_id:mediaData.postId || mediaData.post_id || null,
+      provider:mediaData.provider || 'local',
+      url:mediaData.url || mediaData.data || '',
+      mime:mediaData.type || mediaData.mime || '',
+      size:Math.trunc(Number(mediaData.size || 0)),
+      created_at:new Date(mediaData.at || Date.now()).toISOString()
+    }, 'on_conflict=id', 'resolution=merge-duplicates,return=representation').catch(()=>{});
     console.log(`[Sync] Media: ${mediaData.id} - ${mediaData.type}`);
     res.json({success: true, synced: true, id: mediaData.id, storage: 'indexed-memory'});
   } catch(e) {
@@ -1616,6 +1456,15 @@ io.on('connection', socket=>{
     from = socket.userId || from;
     const toSid=onlineUsers.get(to);
     const payload={from,text,media,msgId,timestamp:timestamp||Date.now()};
+    supabaseRest('messages', 'POST', {
+      id:msgId || 'm_' + Date.now() + '_' + crypto.randomBytes(3).toString('hex'),
+      from_user:from,
+      to_user:to,
+      text:text || '',
+      media:media || null,
+      read:false,
+      created_at:new Date(payload.timestamp).toISOString()
+    }, 'on_conflict=id', 'resolution=ignore-duplicates,return=representation').catch(()=>{});
     if(toSid) io.to(toSid).emit('chat:message',payload);
     socket.emit('chat:message:sent',{msgId,to,timestamp:payload.timestamp});
     // Push notification if offline
@@ -1631,10 +1480,25 @@ io.on('connection', socket=>{
   socket.on('room:message', ({roomId,from,text,media,timestamp})=>{ from = socket.userId || from; io.to(roomId).emit('room:message',{from,text,media,timestamp:timestamp||Date.now()}); });
 
   // Live Stream
-  socket.on('live:start',   ({streamerId,title})=>{ streamerId = socket.userId || streamerId; socket.join('live:'+streamerId); io.emit('live:new',{streamerId,title,viewers:0}); });
+  socket.on('live:start',   ({streamerId,title,postId})=>{
+    streamerId = socket.userId || streamerId;
+    socket.join('live:'+streamerId);
+    supabaseRest('live_events', 'POST', {
+      id:postId || 'live_' + Date.now(),
+      post_id:postId || null,
+      streamer_id:streamerId,
+      status:'live',
+      started_at:new Date().toISOString()
+    }, 'on_conflict=id', 'resolution=merge-duplicates,return=representation').catch(()=>{});
+    io.emit('live:new',{streamerId,title,postId,viewers:0});
+  });
   socket.on('live:comment', ({streamerId,from,text})=>{ from = socket.userId || from; io.to('live:'+streamerId).emit('live:comment',{from,text,t:Date.now()}); });
   socket.on('live:reaction',({streamerId,emoji})=>{ io.to('live:'+streamerId).emit('live:reaction',{emoji}); });
-  socket.on('live:end',     ({streamerId})=>{ io.to('live:'+streamerId).emit('live:ended',{streamerId}); });
+  socket.on('live:end',     ({streamerId,postId})=>{
+    streamerId = socket.userId || streamerId;
+    if(postId) supabaseRest('live_events', 'PATCH', {status:'ended', ended_at:new Date().toISOString()}, `id=eq.${encodeURIComponent(postId)}`, 'return=representation').catch(()=>{});
+    io.to('live:'+streamerId).emit('live:ended',{streamerId,postId});
+  });
   socket.on('live:gift',    ({streamerId,from,gift})=>{ io.to('live:'+streamerId).emit('live:gift',{from,gift,t:Date.now()}); });
 
   // Posts

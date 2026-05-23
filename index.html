@@ -163,8 +163,6 @@ window.atOptions_468x60 = {
 <script defer src="js/live-streaming-fixed.js"></script>
 <script defer src="js/ad-system-enhanced.js"></script>
 <script defer src="js/data-test.js"></script>
-<!-- New Features -->
-<script defer src="js/friends-system.js"></script>
 
 <!-- ─── AD CONFIGURATION ─────────────────────────────────
   Replace values below with your real keys to activate ads
@@ -1904,10 +1902,6 @@ body.light-theme .top-bar { background:#ffffff; border-bottom:1px solid rgba(0,0
       <div class="eh-btn" onclick="watchAd()"><div class="ei">📺</div><div class="el">Watch Ad</div></div>
     </div>
   </div>
-  <div class="section-label">🎯 Daily Point Earning (3x per day)</div>
-  <div class="point-earn-buttons" id="pointEarnButtons" style="display:flex;gap:10px;margin-bottom:12px;">
-    <!-- Buttons will be rendered by JavaScript -->
-  </div>
   <div class="section-label">📋 Daily Tasks</div>
   <div id="dailyTasks"></div>
   <div class="section-label">🏅 Missions & Achievements</div>
@@ -2036,16 +2030,15 @@ body.light-theme .top-bar { background:#ffffff; border-bottom:1px solid rgba(0,0
 <div class="pg" id="pg-friends">
   <div class="friend-hero">
     <div style="font-size:42px;">👥</div>
-    <div style="font-family:var(--fd);font-size:17px;font-weight:800;">Friends</div>
-    <div style="font-size:12px;">Connect with friends who are online!</div>
+    <div style="font-family:var(--fd);font-size:17px;font-weight:800;">Auto Friends</div>
+    <div style="font-size:12px;">Anyone who views your content becomes auto friend!</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px;">
       <div style="background:var(--g2);border-radius:12px;padding:11px;"><div class="mono neon" id="totalAutoFriends">0</div><div>Auto Friends</div></div>
       <div style="background:var(--g2);border-radius:12px;padding:11px;"><div class="mono" style="color:var(--c4);" id="totalViewers">0</div><div>Viewers</div></div>
     </div>
   </div>
   <div class="chips" style="margin-bottom:10px;">
-    <div class="chip on" onclick="friendsTab('friends',this)">👥 My Friends</div>
-    <div class="chip" onclick="friendsTab('auto',this)">✨ Auto Friends</div>
+    <div class="chip on" onclick="friendsTab('auto',this)">✨ Auto Friends</div>
     <div class="chip" onclick="friendsTab('viewers',this)">👁️ Viewers</div>
     <div class="chip" onclick="friendsTab('following',this)">➕ Following</div>
     <div class="chip" onclick="friendsTab('followers',this)">👤 Followers</div>
@@ -2892,16 +2885,11 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
     <input type="file" id="postFileIn" style="display:none" onchange="previewPostFile(this)">
     <div class="ai-panel" id="aiPanelSection" style="display:none;">
-      <div class="media-type-selector" id="mediaTypeSelector">
-        <button class="media-type-btn active" onclick="AICaptionSystem.setMediaType('photo')">📷 Photo</button>
-        <button class="media-type-btn" onclick="AICaptionSystem.setMediaType('video')">🎬 Video</button>
-        <button class="media-type-btn" onclick="AICaptionSystem.setMediaType('audio')">🎵 Audio</button>
-      </div>
       <div class="h-scroll-ltr">
-        <div class="media-chip ai-chip" onclick="AICaptionSystem.generateCaption(AICaptionSystem.currentMediaType, currentPostFileData)">✨ AI Caption</div>
-        <div class="media-chip ai-chip" onclick="AICaptionSystem.generateHashtags(G('postText').value, AICaptionSystem.currentMediaType)">🏷️ Hashtags</div>
-        <div class="media-chip ai-chip" onclick="AICaptionSystem.detectObjects(currentPostFileData)">👁️ Detect Objects</div>
-        <div class="media-chip ai-chip" onclick="AICaptionSystem.translateText(G('postText').value, 'en')">🌐 Translate</div>
+        <div class="media-chip ai-chip" onclick="aiGenerateCaption()">✨ AI Caption</div>
+        <div class="media-chip ai-chip" onclick="aiSuggestHashtags()">🏷️ Hashtags</div>
+        <div class="media-chip ai-chip" onclick="aiDetectObjects()">👁️ Detect Objects</div>
+        <div class="media-chip ai-chip" onclick="aiTranslate()">🌐 Translate</div>
         <div class="media-chip ai-chip" onclick="aiGenerateImage()">🎨 AI Image</div>
         <div class="media-chip ai-chip" onclick="aiSummarize()">📄 Summarize</div>
         <div class="media-chip ai-chip" onclick="aiSpellCheck()">🔍 Spell Check</div>
@@ -6107,18 +6095,7 @@ function addNotif(toId, type, icon, msg, refId='') { D.notifs=D.notifs||[]; D.no
 
 // Earn Page (simplified for brevity - kept essential functions)
 const DAILY_TASKS=[{ id:'dt1', ico:'📺', name:'Watch Ad', desc:'Earn pts', pts:5, fn:()=>watchAd() },{ id:'dt2', ico:'❤️', name:'Like 3 Posts', desc:'Engage', pts:3, fn:()=>{ addPts(3,'Like Task'); toast('s','+3 pts!'); } },{ id:'dt3', ico:'💬', name:'Comment', desc:'Leave a comment', pts:2, fn:()=>{ addPts(2,'Comment Task'); toast('s','+2 pts!'); } },{ id:'dt4', ico:'📝', name:'Create Post', desc:'Share content', pts:2, fn:()=>openPostModal() },{ id:'dt5', ico:'🔗', name:'Share Post', desc:'Share with friends', pts:3, fn:()=>{ addPts(3,'Share Task'); toast('s','+3 pts!'); } }];
-function rEarn() { syncUI(); let dt=G('dailyTasks'); if(dt){ let today=new Date().toDateString(); dt.innerHTML=DAILY_TASKS.map(t=>{ let done=CU?.tasksToday?.[t.id]===today; return `<div class="task-card"><div class="task-ico">${t.ico}</div><div class="task-info"><div class="task-name">${t.name}</div><div class="task-desc">${t.desc}</div></div><div class="task-reward">+${t.pts}</div><button class="btn ${done?'btn-ghost':'btn-p'} btn-xs" ${done?'disabled':''} onclick="doTask('${t.id}')">${done?'✅ Done':'Go'}</button></div>`; }).join(''); }
-  
-  // Render daily point earning buttons
-  if(typeof DailyPointsSystem !== 'undefined') {
-    DailyPointsSystem.loadButtonStatus(CU.id).then(() => {
-      const btnContainer = G('pointEarnButtons');
-      if(btnContainer) {
-        btnContainer.innerHTML = DailyPointsSystem.renderPointButtons();
-      }
-    });
-  }
-}
+function rEarn() { syncUI(); let dt=G('dailyTasks'); if(dt){ let today=new Date().toDateString(); dt.innerHTML=DAILY_TASKS.map(t=>{ let done=CU?.tasksToday?.[t.id]===today; return `<div class="task-card"><div class="task-ico">${t.ico}</div><div class="task-info"><div class="task-name">${t.name}</div><div class="task-desc">${t.desc}</div></div><div class="task-reward">+${t.pts}</div><button class="btn ${done?'btn-ghost':'btn-p'} btn-xs" ${done?'disabled':''} onclick="doTask('${t.id}')">${done?'✅ Done':'Go'}</button></div>`; }).join(''); } }
 function doTask(tid) { let t=DAILY_TASKS.find(x=>x.id===tid); if(!t||!CU) return; CU.tasksToday=CU.tasksToday||{}; let today=new Date().toDateString(); if(CU.tasksToday[tid]===today){ toast('w','Already done'); return; } CU.tasksToday[tid]=today; t.fn(); saveData(); rEarn(); 
   // MAX AD SYSTEM: Show interactive ad after task completion (high engagement)
   if (typeof MAX_AD_SYSTEM !== 'undefined' && Math.random() > 0.6) {
@@ -6259,28 +6236,8 @@ function saveProfile() {
 function shareProfile() { navigator.clipboard?.writeText(location.href); toast('s','Link copied!'); }
 
 // Friends Page
-function rFriends() { 
-  updateFriendsBadge(); 
-  if(!CU) return; 
-  G('totalAutoFriends').textContent=(CU.autoFriends||[]).length; 
-  G('totalViewers').textContent=(CU.viewers||[]).length; 
-  
-  // Load friends from new system
-  if(typeof FriendsSystem !== 'undefined') {
-    FriendsSystem.loadFriends(CU.id).then(() => {
-      friendsTab('friends', null);
-    });
-  } else {
-    friendsTab('auto', null);
-  }
-}
-function friendsTab(tab,el) { document.querySelectorAll('#pg-friends .chip').forEach(c=>c.classList.remove('on')); if(el) el.classList.add('on'); let list=G('friendsList'); if(!list||!CU) return; 
-  // Handle new friends tab
-  if(tab==='friends' && typeof FriendsSystem !== 'undefined') {
-    list.innerHTML = FriendsSystem.renderFriendsList();
-    return;
-  }
-  if(tab==='discover'){ let q=(G('friendSearch')?.value||'').toLowerCase(); let users=Object.values(D.users).filter(u=>u.id!==CU.id && !u.isAdmin && (!q || (u.name||'').toLowerCase().includes(q) || (u.username||'').toLowerCase().includes(q))).slice(0,30); list.innerHTML=users.length?users.map(u=>{ let linked=(CU.following||[]).includes(u.id)||(CU.autoFriends||[]).includes(u.id)||(CU.forceFollowed||[]).includes(u.id); let grad=randomGrad(); return `<div class="friend-card"><div class="fc-av" style="background:linear-gradient(135deg,${grad[0]},${grad[1]});">${u.avatar?`<img src="${u.avatar}">`:u.name?.charAt(0).toUpperCase()}</div><div class="fc-info"><div class="fc-nm">${esc(u.name||'User')}</div><div class="fc-sub">@${esc(u.username||'')} · ${u.points||0} pts</div></div><div class="fc-actions"><button class="btn ${linked?'btn-ghost':'btn-p'} btn-xs" onclick="${linked?`openChat('${u.id}')`:`permanentFollow('${u.id}')`}">${linked?'Message':'Add Friend'}</button></div></div>`; }).join(''):'<div style="padding:40px 20px;text-align:center;color:var(--t3);">No users found</div>'; return; } let uids=tab==='auto'?(CU.autoFriends||[]):(tab==='viewers'?(CU.viewers||[]):(tab==='following'?(CU.following||[]):(CU.followers||[]))); list.innerHTML=''; if(!uids.length){
+function rFriends() { updateFriendsBadge(); if(!CU) return; G('totalAutoFriends').textContent=(CU.autoFriends||[]).length; G('totalViewers').textContent=(CU.viewers||[]).length; friendsTab('auto',null); }
+function friendsTab(tab,el) { document.querySelectorAll('#pg-friends .chip').forEach(c=>c.classList.remove('on')); if(el) el.classList.add('on'); let list=G('friendsList'); if(!list||!CU) return; if(tab==='discover'){ let q=(G('friendSearch')?.value||'').toLowerCase(); let users=Object.values(D.users).filter(u=>u.id!==CU.id && !u.isAdmin && (!q || (u.name||'').toLowerCase().includes(q) || (u.username||'').toLowerCase().includes(q))).slice(0,30); list.innerHTML=users.length?users.map(u=>{ let linked=(CU.following||[]).includes(u.id)||(CU.autoFriends||[]).includes(u.id)||(CU.forceFollowed||[]).includes(u.id); let grad=randomGrad(); return `<div class="friend-card"><div class="fc-av" style="background:linear-gradient(135deg,${grad[0]},${grad[1]});">${u.avatar?`<img src="${u.avatar}">`:u.name?.charAt(0).toUpperCase()}</div><div class="fc-info"><div class="fc-nm">${esc(u.name||'User')}</div><div class="fc-sub">@${esc(u.username||'')} · ${u.points||0} pts</div></div><div class="fc-actions"><button class="btn ${linked?'btn-ghost':'btn-p'} btn-xs" onclick="${linked?`openChat('${u.id}')`:`permanentFollow('${u.id}')`}">${linked?'Message':'Add Friend'}</button></div></div>`; }).join(''):'<div style="padding:40px 20px;text-align:center;color:var(--t3);">No users found</div>'; return; } let uids=tab==='auto'?(CU.autoFriends||[]):(tab==='viewers'?(CU.viewers||[]):(tab==='following'?(CU.following||[]):(CU.followers||[]))); list.innerHTML=''; if(!uids.length){
   list.innerHTML='<div style="padding:40px 20px;text-align:center;color:var(--t3);"><div style="font-size:32px;margin-bottom:8px;">👥</div><div>No connections yet.<br>Post content to connect with others!</div></div>';
   return;
 } uids.forEach(uid=>{ let u=D.users[uid]; if(!u) return; let grad=randomGrad(); let actions = `<button class="btn btn-p btn-xs" onclick="openChat('${uid}')" title="Chat">💬</button><button class="btn btn-s btn-xs" onclick="startCall('${uid}','audio')" title="Audio Call">📞</button><button class="btn btn-s btn-xs" onclick="startCall('${uid}','video')" title="Video Call">📹</button><button class="btn btn-s btn-xs" onclick="sendSMS('${uid}')" title="SMS">📩</button>`; if(tab==='followers'){ actions += `<button class="btn btn-e btn-xs" onclick="removeFollower('${uid}')" title="Remove follower">✂️</button>`; } else { actions += `<button class="btn btn-r btn-xs" onclick="removeFriend('${uid}')" title="Remove friend">Remove</button>`; } list.innerHTML+=`<div class="friend-card"><div class="fc-av" style="background:linear-gradient(135deg,${grad[0]},${grad[1]});">${u.avatar?`<img src="${u.avatar}">`:u.name?.charAt(0).toUpperCase()}</div><div class="fc-info"><div class="fc-nm">${esc(u.name)} ${u.verified?'<span class="badge b-ver">✔</span>':''} ${u.kycVerified?'<span class="badge b-kyc">✅</span>':''}</div><div class="fc-sub">@${esc(u.username||'')} · ${u.points||0} pts</div></div><div class="fc-actions">${actions}</div></div>`; }); }
@@ -7155,8 +7112,26 @@ function renderAdminKYC() {
     </div>`).join(''):'<div style="padding:20px;text-align:center;color:var(--t3);">No pending KYC requests</div>';
 }
 
-function renderAdminWithdrawals() {
+async function renderAdminWithdrawals() {
   let div=G('withdrawQueue'); if(!div) return;
+  try {
+    const r = await fetch('/api/admin/withdrawals', {cache:'no-store'});
+    const d = await r.json();
+    if(d.success && Array.isArray(d.withdrawals)) {
+      D.withdrawals = d.withdrawals.map(w => ({
+        id:w.id,
+        user:w.user || w.user_id,
+        amount:Number(w.amount || 0),
+        method:w.method,
+        account:w.account,
+        status:w.status || 'pending',
+        at:w.at || new Date(w.created_at || Date.now()).getTime(),
+        approvedAt:w.approvedAt || (w.approved_at ? new Date(w.approved_at).getTime() : null),
+        rejectedAt:w.rejectedAt || (w.rejected_at ? new Date(w.rejected_at).getTime() : null)
+      }));
+      saveData();
+    }
+  } catch(e) {}
   let pending=(D.withdrawals||[]).filter(w=>w.status==='pending').sort((a,b)=>b.at-a.at);
   div.innerHTML=pending.length?pending.map(w=>{
     let u=D.users[w.user]||{};
@@ -7213,13 +7188,29 @@ function verifyKYC(uid) {
 function rejectKYC(uid) {
   if(D.users[uid]){ delete D.users[uid].kycPending;
   addNotif(uid,'kyc','❌','Your KYC was rejected. Please resubmit.'); saveData(); renderAdminKYC(); toast('e','KYC rejected for '+D.users[uid].name); } }
-function approveWithdraw(wid) {
+async function approveWithdraw(wid) {
   let w=(D.withdrawals||[]).find(x=>x.id===wid); if(!w) return;
+  try {
+    const r = await fetch(`/api/admin/withdrawals/${encodeURIComponent(wid)}/approve`, {method:'POST'});
+    const d = await r.json();
+    if(!r.ok || !d.success) throw new Error(d.error || 'Approve failed');
+  } catch(e) {
+    toast('e', e.message || 'Approve failed');
+    return;
+  }
   w.status='approved'; w.approvedAt=Date.now();
   addNotif(w.user,'withdraw','✅',`Your withdrawal of ${w.amount} pts was approved!`);
   saveData(); renderAdminWithdrawals(); toast('s','Withdrawal approved!'); }
-function rejectWithdraw(wid) {
+async function rejectWithdraw(wid) {
   let w=(D.withdrawals||[]).find(x=>x.id===wid); if(!w) return;
+  try {
+    const r = await fetch(`/api/admin/withdrawals/${encodeURIComponent(wid)}/reject`, {method:'POST'});
+    const d = await r.json();
+    if(!r.ok || !d.success) throw new Error(d.error || 'Reject failed');
+  } catch(e) {
+    toast('e', e.message || 'Reject failed');
+    return;
+  }
   // Refund points
   let u=D.users[w.user]; if(u){ u.points=(u.points||0)+w.amount; }
   w.status='rejected'; w.rejectedAt=Date.now();
@@ -9185,29 +9176,6 @@ window.addEventListener('load', async () => {
   try {
     if(typeof initData === 'function') initData();
     if(typeof loadData === 'function') await loadData();
-    
-    // Initialize new features
-    if(typeof CU !== 'undefined' && CU && CU.id) {
-      // Load friends
-      if(typeof FriendsSystem !== 'undefined') {
-        FriendsSystem.loadFriends(CU.id);
-      }
-      
-      // Load daily point button status
-      if(typeof DailyPointsSystem !== 'undefined') {
-        DailyPointsSystem.loadButtonStatus(CU.id);
-      }
-      
-      // Load post ads
-      if(typeof AdSystem !== 'undefined') {
-        AdSystem.loadPostAds();
-      }
-      
-      // If admin, load user stats
-      if(CU.is_admin && typeof AdminDashboard !== 'undefined') {
-        AdminDashboard.loadUserStats();
-      }
-    }
     if(typeof loadSession === 'function') loadSession();
     if(typeof syncCU === 'function') syncCU();
     
@@ -10501,7 +10469,7 @@ setTimeout(() => { const el = document.getElementById('videoAdContainer'); if(el
 </div>
 <style>
 @keyframes pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.1);}}
-.mxt-safe-fab{position:fixed !important;right:18px !important;width:64px !important;height:64px !important;border-radius:50% !important;display:flex !important;align-items:center !important;justify-content:center !important;cursor:pointer !important;z-index:100006 !important;visibility:visible !important;opacity:1 !important;pointer-events:auto !important;touch-action:manipulation !important;-webkit-tap-highlight-color:transparent !important;user-select:none !important;box-shadow:0 12px 34px rgba(0,0,0,.38),0 0 28px rgba(0,212,255,.22) !important;animation:pulse 2s infinite;}
+.mxt-safe-fab{position:fixed !important;right:18px !important;width:64px !important;height:64px !important;border-radius:50% !important;display:flex !important;align-items:center !important;justify-content:center !important;cursor:pointer !important;z-index:650 !important;visibility:visible !important;opacity:1 !important;pointer-events:auto !important;touch-action:manipulation !important;box-shadow:0 12px 34px rgba(0,0,0,.38),0 0 28px rgba(0,212,255,.22) !important;animation:pulse 2s infinite;}
 .mxt-create-fab{bottom:calc(92px + env(safe-area-inset-bottom)) !important;background:linear-gradient(135deg,#6d28d9,#00ffaa) !important;}
 .mxt-fire-fab{bottom:calc(166px + env(safe-area-inset-bottom)) !important;background:linear-gradient(135deg,#ff6b6b,#ee5a6f) !important;}
 .mxt-safe-fab span{font-size:0 !important;line-height:1 !important;user-select:none !important;}
@@ -10511,47 +10479,16 @@ setTimeout(() => { const el = document.getElementById('videoAdContainer'); if(el
 </style>
 <script>
 function handleQuickCreateFab(ev){
-  ev && ev.preventDefault && ev.preventDefault();
   ev && ev.stopPropagation && ev.stopPropagation();
-  ev && ev.stopImmediatePropagation && ev.stopImmediatePropagation();
-  if(!CU) { if(typeof toast === 'function') toast('e','Login required'); return false; }
-  if(typeof openPostModal === 'function') openPostModal('text');
+  if(!CU) { toast('e','Login required'); return; }
+  if(typeof openPostModal === 'function') openPostModal();
   else if(G('fab')) G('fab').click();
-  return false;
 }
 function handleFireFab(ev){
-  ev && ev.preventDefault && ev.preventDefault();
   ev && ev.stopPropagation && ev.stopPropagation();
-  ev && ev.stopImmediatePropagation && ev.stopImmediatePropagation();
-  if(!CU) { if(typeof toast === 'function') toast('e','Login required'); return false; }
   if(typeof nav === 'function') nav('earn');
-  if(typeof showRewardedAd === 'function') {
-    try { showRewardedAd((pts)=>{ if(typeof addPts === 'function') addPts(pts,'Fire Quick Earn'); }); } catch(e) {}
-  }
   if(typeof toast === 'function') toast('i','Earn page opened');
-  return false;
 }
-function installSafeFabHandlers(){
-  const bind = (id, fn) => {
-    const el = document.getElementById(id);
-    if(!el || el.dataset.safeFabBound) return;
-    el.dataset.safeFabBound = '1';
-    el.setAttribute('tabindex','0');
-    el.style.pointerEvents = 'auto';
-    el.style.zIndex = '100006';
-    ['click','pointerup','touchend'].forEach(evt => {
-      el.addEventListener(evt, fn, {capture:true});
-    });
-    el.addEventListener('keydown', e => {
-      if(e.key === 'Enter' || e.key === ' ') fn(e);
-    });
-  };
-  bind('fabAd', handleQuickCreateFab);
-  bind('socialBarAd', handleFireFab);
-}
-document.addEventListener('DOMContentLoaded', installSafeFabHandlers);
-window.addEventListener('load', installSafeFabHandlers);
-setInterval(installSafeFabHandlers, 1500);
 </script>
 
 <!-- Exit Intent Popup — High Conversion -->
@@ -14423,14 +14360,503 @@ console.log('[Debug] rSettings exists:', typeof rSettings === 'function');
 })();
 </script>
 
+<script>
+/* Monetixra universal language + smooth UI layer */
+(function(){
+  const ready = fn => document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', fn, {once:true}) : fn();
+  const idle = fn => (window.requestIdleCallback || (cb => setTimeout(cb, 16)))(fn, {timeout:600});
+  const LANG_KEY = 'mxt_app_language';
+  const CACHE_KEY = 'mxt_i18n_cache_v1';
+  const UI_SELECTOR = 'button,.bn .lbl,.cat-pill,.chip,.page-title,.section-label,.sett-ttl,.sett-nm,.sett-sub,.btn,.task-name,.task-desc,.wh-lbl,.pstat-l,.ss-l,.modal-ttl,.fl,.chat-prev,.ad-spon,.badge,.sett-tag,option';
+  const SKIP_SELECTOR = 'script,style,textarea,input,[contenteditable="true"],.post-txt,.post-nm,.cr-bub,.lv-cm,.notif-ttl,.tx-lbl,.nft-name,.app-name,.fc-nm,.chat-nm';
+  const EXTRA_LANGS = {
+    ur:{name:'Urdu',flag:'🇵🇰'}, id:{name:'Indonesian',flag:'🇮🇩'}, ms:{name:'Malay',flag:'🇲🇾'}, tr:{name:'Turkish',flag:'🇹🇷'}, it:{name:'Italian',flag:'🇮🇹'}, nl:{name:'Dutch',flag:'🇳🇱'},
+    ko:{name:'Korean',flag:'🇰🇷'}, th:{name:'Thai',flag:'🇹🇭'}, vi:{name:'Vietnamese',flag:'🇻🇳'}, fa:{name:'Persian',flag:'🇮🇷'}, pl:{name:'Polish',flag:'🇵🇱'}, uk:{name:'Ukrainian',flag:'🇺🇦'},
+    ro:{name:'Romanian',flag:'🇷🇴'}, el:{name:'Greek',flag:'🇬🇷'}, sv:{name:'Swedish',flag:'🇸🇪'}, no:{name:'Norwegian',flag:'🇳🇴'}, da:{name:'Danish',flag:'🇩🇰'}, fi:{name:'Finnish',flag:'🇫🇮'},
+    cs:{name:'Czech',flag:'🇨🇿'}, sk:{name:'Slovak',flag:'🇸🇰'}, hu:{name:'Hungarian',flag:'🇭🇺'}, he:{name:'Hebrew',flag:'🇮🇱'}, sw:{name:'Swahili',flag:'🇹🇿'}, ta:{name:'Tamil',flag:'🇮🇳'},
+    te:{name:'Telugu',flag:'🇮🇳'}, mr:{name:'Marathi',flag:'🇮🇳'}, gu:{name:'Gujarati',flag:'🇮🇳'}, kn:{name:'Kannada',flag:'🇮🇳'}, ml:{name:'Malayalam',flag:'🇮🇳'}, pa:{name:'Punjabi',flag:'🇮🇳'},
+    ne:{name:'Nepali',flag:'🇳🇵'}, si:{name:'Sinhala',flag:'🇱🇰'}, my:{name:'Burmese',flag:'🇲🇲'}, km:{name:'Khmer',flag:'🇰🇭'}, lo:{name:'Lao',flag:'🇱🇦'}, fil:{name:'Filipino',flag:'🇵🇭'}
+  };
+  const CORE = {
+    bn:{Feed:'ফিড',Explore:'এক্সপ্লোর',Earn:'আয়',Friends:'বন্ধু',Wallet:'ওয়ালেট',Chat:'চ্যাট',Apps:'অ্যাপস',NFT:'এনএফটি',Meta:'মেটা',Stats:'স্ট্যাটস',Badges:'ব্যাজ',Me:'আমি',Settings:'সেটিংস',Posts:'পোস্ট',Media:'মিডিয়া',Saved:'সেভড',Earnings:'আয়',Followers:'ফলোয়ার',Following:'ফলোয়িং',Points:'পয়েন্ট','Auto Friends':'অটো বন্ধু',Viewers:'দর্শক','Find Friends':'বন্ধু খুঁজুন','App Language':'অ্যাপ ভাষা','Auto-Translate Posts':'পোস্ট অটো অনুবাদ','Translate to your language':'আপনার ভাষায় অনুবাদ','Dark / Light Mode':'ডার্ক / লাইট মোড','Edit Profile':'প্রোফাইল এডিট','Change Password':'পাসওয়ার্ড পরিবর্তন','KYC Verification':'KYC যাচাই','Privacy & Security':'প্রাইভেসি ও নিরাপত্তা',Notifications:'নোটিফিকেশন','Content & Feed':'কনটেন্ট ও ফিড','Language & Region':'ভাষা ও অঞ্চল','Earnings & Wallet':'আয় ও ওয়ালেট','Storage & Offline':'স্টোরেজ ও অফলাইন',About:'সম্পর্কে',Admin:'অ্যাডমিন','Sign Out':'সাইন আউট','Delete Account':'অ্যাকাউন্ট ডিলিট',Change:'পরিবর্তন',Copy:'কপি',Share:'শেয়ার',Refresh:'রিফ্রেশ',All:'সব',Active:'সক্রিয়',Disabled:'বন্ধ',Blocked:'ব্লকড',Search:'সার্চ',Send:'পাঠান',Cancel:'বাতিল',Save:'সেভ',Delete:'ডিলিট',Done:'সম্পন্ন',Go:'যান','No posts':'কোন পোস্ট নেই','No users':'কোন ইউজার নেই','No notifications':'কোন নোটিফিকেশন নেই','Mint New NFT':'নতুন NFT মিন্ট','Payment Methods':'পেমেন্ট পদ্ধতি','Crypto Wallets':'ক্রিপ্টো ওয়ালেট','Tax Report':'ট্যাক্স রিপোর্ট','Clear Cache':'ক্যাশ পরিষ্কার','Export My Data':'আমার ডেটা এক্সপোর্ট','Backup Data':'ডেটা ব্যাকআপ','Restore Backup':'ব্যাকআপ রিস্টোর','Send Feedback':'ফিডব্যাক পাঠান','Rate This App':'অ্যাপ রেট করুন','Private Account':'প্রাইভেট অ্যাকাউন্ট','Who Can Message Me':'কে মেসেজ করতে পারবে','Read Receipts':'রিড রিসিপ্ট','Location Sharing':'লোকেশন শেয়ার','Active Sessions':'সক্রিয় সেশন','Push Notifications':'পুশ নোটিফিকেশন','Likes & Reactions':'লাইক ও রিঅ্যাকশন','Comments & Replies':'কমেন্ট ও রিপ্লাই','New Followers':'নতুন ফলোয়ার','Earnings Alerts':'আয়ের অ্যালার্ট','MLM Commission':'MLM কমিশন','Copyright Alerts':'কপিরাইট অ্যালার্ট','Download Quality':'ডাউনলোড কোয়ালিটি','Date Format':'তারিখ ফরম্যাট','Wallet & Balance':'ওয়ালেট ও ব্যালেন্স','App Version':'অ্যাপ ভার্সন','Terms of Service':'সেবার শর্ত','Privacy Policy':'প্রাইভেসি পলিসি'},
+    hi:{Feed:'फ़ीड',Explore:'एक्सप्लोर',Earn:'कमाएं',Friends:'दोस्त',Wallet:'वॉलेट',Chat:'चैट',Apps:'ऐप्स',Meta:'मेटा',Stats:'आंकड़े',Badges:'बैज',Me:'मैं',Settings:'सेटिंग्स',Posts:'पोस्ट',Media:'मीडिया',Saved:'सेव्ड',Earnings:'कमाई',Followers:'फ़ॉलोअर',Following:'फ़ॉलोइंग',Points:'पॉइंट्स',Change:'बदलें',Copy:'कॉपी',Share:'शेयर',Refresh:'रीफ़्रेश',All:'सभी',Search:'खोजें',Send:'भेजें',Cancel:'रद्द',Save:'सेव',Delete:'डिलीट',Done:'पूरा',Go:'जाएं'},
+    es:{Feed:'Inicio',Explore:'Explorar',Earn:'Ganar',Friends:'Amigos',Wallet:'Billetera',Chat:'Chat',Apps:'Apps',Meta:'Meta',Stats:'Estadísticas',Badges:'Insignias',Me:'Yo',Settings:'Ajustes',Posts:'Publicaciones',Media:'Medios',Saved:'Guardado',Earnings:'Ganancias',Followers:'Seguidores',Following:'Siguiendo',Points:'Puntos',Change:'Cambiar',Copy:'Copiar',Share:'Compartir',Refresh:'Actualizar',All:'Todo',Search:'Buscar',Send:'Enviar',Cancel:'Cancelar',Save:'Guardar',Delete:'Eliminar',Done:'Listo',Go:'Ir'},
+    fr:{Feed:'Fil',Explore:'Explorer',Earn:'Gagner',Friends:'Amis',Wallet:'Portefeuille',Chat:'Chat',Apps:'Apps',Meta:'Méta',Stats:'Stats',Badges:'Badges',Me:'Moi',Settings:'Paramètres',Posts:'Posts',Media:'Média',Saved:'Enregistré',Earnings:'Revenus',Followers:'Abonnés',Following:'Abonnements',Points:'Points',Change:'Changer',Copy:'Copier',Share:'Partager',Refresh:'Actualiser',All:'Tout',Search:'Rechercher',Send:'Envoyer',Cancel:'Annuler',Save:'Sauver',Delete:'Supprimer',Done:'Terminé',Go:'Aller'},
+    de:{Feed:'Feed',Explore:'Entdecken',Earn:'Verdienen',Friends:'Freunde',Wallet:'Wallet',Chat:'Chat',Apps:'Apps',Meta:'Meta',Stats:'Statistiken',Badges:'Abzeichen',Me:'Ich',Settings:'Einstellungen',Posts:'Beiträge',Media:'Medien',Saved:'Gespeichert',Earnings:'Einnahmen',Followers:'Follower',Following:'Folge ich',Points:'Punkte',Change:'Ändern',Copy:'Kopieren',Share:'Teilen',Refresh:'Aktualisieren',All:'Alle',Search:'Suchen',Send:'Senden',Cancel:'Abbrechen',Save:'Speichern',Delete:'Löschen',Done:'Fertig',Go:'Los'},
+    pt:{Feed:'Feed',Explore:'Explorar',Earn:'Ganhar',Friends:'Amigos',Wallet:'Carteira',Chat:'Chat',Apps:'Apps',Meta:'Meta',Stats:'Estatísticas',Badges:'Medalhas',Me:'Eu',Settings:'Configurações',Posts:'Posts',Media:'Mídia',Saved:'Salvos',Earnings:'Ganhos',Followers:'Seguidores',Following:'Seguindo',Points:'Pontos',Change:'Alterar',Copy:'Copiar',Share:'Compartilhar',Refresh:'Atualizar',All:'Todos',Search:'Pesquisar',Send:'Enviar',Cancel:'Cancelar',Save:'Salvar',Delete:'Excluir',Done:'Feito',Go:'Ir'},
+    ru:{Feed:'Лента',Explore:'Обзор',Earn:'Заработок',Friends:'Друзья',Wallet:'Кошелек',Chat:'Чат',Apps:'Приложения',Meta:'Мета',Stats:'Статистика',Badges:'Значки',Me:'Я',Settings:'Настройки',Posts:'Посты',Media:'Медиа',Saved:'Сохранено',Earnings:'Доход',Followers:'Подписчики',Following:'Подписки',Points:'Баллы',Change:'Изменить',Copy:'Копировать',Share:'Поделиться',Refresh:'Обновить',All:'Все',Search:'Поиск',Send:'Отправить',Cancel:'Отмена',Save:'Сохранить',Delete:'Удалить',Done:'Готово',Go:'Перейти'},
+    ar:{Feed:'الخلاصة',Explore:'استكشاف',Earn:'اكسب',Friends:'الأصدقاء',Wallet:'المحفظة',Chat:'الدردشة',Apps:'التطبيقات',Meta:'ميتا',Stats:'الإحصاءات',Badges:'الشارات',Me:'أنا',Settings:'الإعدادات',Posts:'المنشورات',Media:'الوسائط',Saved:'المحفوظات',Earnings:'الأرباح',Followers:'المتابعون',Following:'يتابع',Points:'النقاط',Change:'تغيير',Copy:'نسخ',Share:'مشاركة',Refresh:'تحديث',All:'الكل',Search:'بحث',Send:'إرسال',Cancel:'إلغاء',Save:'حفظ',Delete:'حذف',Done:'تم',Go:'اذهب'},
+    zh:{Feed:'动态',Explore:'探索',Earn:'赚取',Friends:'好友',Wallet:'钱包',Chat:'聊天',Apps:'应用',Meta:'元宇宙',Stats:'统计',Badges:'徽章',Me:'我',Settings:'设置',Posts:'帖子',Media:'媒体',Saved:'已保存',Earnings:'收益',Followers:'粉丝',Following:'关注',Points:'积分',Change:'更改',Copy:'复制',Share:'分享',Refresh:'刷新',All:'全部',Search:'搜索',Send:'发送',Cancel:'取消',Save:'保存',Delete:'删除',Done:'完成',Go:'前往'},
+    ja:{Feed:'フィード',Explore:'探す',Earn:'稼ぐ',Friends:'友達',Wallet:'ウォレット',Chat:'チャット',Apps:'アプリ',Meta:'メタ',Stats:'統計',Badges:'バッジ',Me:'自分',Settings:'設定',Posts:'投稿',Media:'メディア',Saved:'保存済み',Earnings:'収益',Followers:'フォロワー',Following:'フォロー中',Points:'ポイント',Change:'変更',Copy:'コピー',Share:'共有',Refresh:'更新',All:'すべて',Search:'検索',Send:'送信',Cancel:'キャンセル',Save:'保存',Delete:'削除',Done:'完了',Go:'移動'},
+    ko:{Feed:'피드',Explore:'탐색',Earn:'수익',Friends:'친구',Wallet:'지갑',Chat:'채팅',Apps:'앱',Meta:'메타',Stats:'통계',Badges:'배지',Me:'나',Settings:'설정',Posts:'게시물',Media:'미디어',Saved:'저장됨',Earnings:'수익',Followers:'팔로워',Following:'팔로잉',Points:'포인트',Change:'변경',Copy:'복사',Share:'공유',Refresh:'새로고침',All:'전체',Search:'검색',Send:'보내기',Cancel:'취소',Save:'저장',Delete:'삭제',Done:'완료',Go:'이동'}
+  };
+  const PLACEHOLDERS = {
+    bn:{'Search users, posts, hashtags, NFTs...':'ইউজার, পোস্ট, হ্যাশট্যাগ, NFT সার্চ করুন...','Search friends by name...':'নাম দিয়ে বন্ধু সার্চ করুন...','Search language...':'ভাষা সার্চ করুন...','Share your app (Play Store / App Store only)...':'আপনার অ্যাপ শেয়ার করুন (শুধু Play Store / App Store)...','Recipient address':'প্রাপকের ঠিকানা',Amount:'পরিমাণ'},
+    hi:{'Search users, posts, hashtags, NFTs...':'यूज़र, पोस्ट, हैशटैग, NFT खोजें...','Search friends by name...':'नाम से दोस्त खोजें...','Search language...':'भाषा खोजें...'},
+    es:{'Search users, posts, hashtags, NFTs...':'Buscar usuarios, publicaciones, hashtags, NFTs...','Search friends by name...':'Buscar amigos por nombre...','Search language...':'Buscar idioma...'},
+    fr:{'Search users, posts, hashtags, NFTs...':'Rechercher utilisateurs, posts, hashtags, NFTs...','Search friends by name...':'Rechercher des amis par nom...','Search language...':'Rechercher une langue...'}
+  };
+  let cache = {};
+  try { cache = JSON.parse(localStorage.getItem(CACHE_KEY) || '{}') || {}; } catch(e) {}
+
+  function baseText(s){
+    return String(s || '').replace(/\s+/g,' ').trim().replace(/^[^\p{L}\p{N}]+/u,'').replace(/[›»]+$/,'').trim();
+  }
+  function translateLocal(text, lang){
+    if(!text || lang === 'en') return text;
+    const clean = baseText(text);
+    const dict = CORE[lang] || {};
+    const translated = dict[clean] || dict[clean.replace(/\(.+\)$/,'').trim()];
+    if(!translated) return null;
+    const prefix = String(text).match(/^\s*[^\p{L}\p{N}]*/u)?.[0] || '';
+    return prefix + translated;
+  }
+  function current(){
+    try { return localStorage.getItem(LANG_KEY) || window.currentLang || currentLang || 'en'; }
+    catch(e) { return localStorage.getItem(LANG_KEY) || window.currentLang || 'en'; }
+  }
+  function saveCache(){
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify(cache).slice(0, 180000)); } catch(e) {}
+  }
+  async function translateRemote(text, lang){
+    const clean = baseText(text);
+    if(!clean || clean.length < 2 || clean.length > 80) return text;
+    const key = lang + '|' + clean;
+    if(cache[key]) return cache[key];
+    const local = translateLocal(text, lang);
+    if(local) return local;
+    try {
+      const res = await fetch('/api/translate', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({text:clean, targetLanguage:lang})});
+      const data = await res.json();
+      const out = data.translated || data.translatedText || clean;
+      cache[key] = out;
+      saveCache();
+      return out;
+    } catch(e) {
+      return text;
+    }
+  }
+  async function translateBatch(texts, lang){
+    const unique = [...new Set(texts.map(baseText).filter(t => t.length >= 2 && t.length <= 120))].slice(0, 80);
+    const misses = unique.filter(t => !cache[lang + '|' + t]);
+    if(misses.length) {
+      try {
+        const res = await fetch('/api/translate/batch', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({texts:misses, targetLanguage:lang})});
+        const data = await res.json();
+        const out = data.translations || data.translated || [];
+        misses.forEach((t,i) => { cache[lang + '|' + t] = out[i] || t; });
+        saveCache();
+      } catch(e) {}
+    }
+    return Object.fromEntries(unique.map(t => [t, cache[lang + '|' + t] || t]));
+  }
+  function applyNode(el, lang=current()){
+    if(!el || lang === 'en' || el.closest?.(SKIP_SELECTOR)) return;
+    if(el.matches?.('input,textarea') && el.placeholder) {
+      el.dataset.i18nSourcePlaceholder = el.dataset.i18nSourcePlaceholder || el.placeholder;
+      const ph = PLACEHOLDERS[lang]?.[el.dataset.i18nSourcePlaceholder] || translateLocal(el.dataset.i18nSourcePlaceholder, lang);
+      if(ph) el.placeholder = ph;
+      return;
+    }
+    if(!el.matches?.(UI_SELECTOR)) return;
+    const directTextNodes = Array.from(el.childNodes || []).filter(n => n.nodeType === 3 && baseText(n.nodeValue));
+    directTextNodes.forEach(n => {
+      n.__sourceText = n.__sourceText || n.nodeValue;
+      const out = translateLocal(n.__sourceText, lang);
+      if(out) n.nodeValue = out;
+    });
+    if(el.childNodes.length === 1 && el.childNodes[0].nodeType === 3) {
+      const src = el.dataset.i18nSourceText || el.textContent;
+      el.dataset.i18nSourceText = src;
+      const out = translateLocal(src, lang);
+      if(out) el.textContent = out;
+    }
+  }
+  function applyAll(root=document, lang=current()){
+    if(lang === 'en') {
+      document.documentElement.lang = 'en';
+      document.documentElement.dir = 'ltr';
+      document.querySelectorAll('[data-i18n-source-text]').forEach(el => { el.textContent = el.dataset.i18nSourceText; });
+      document.querySelectorAll('[data-i18n-source-placeholder]').forEach(el => { el.placeholder = el.dataset.i18nSourcePlaceholder; });
+      return;
+    }
+    document.documentElement.lang = lang;
+    document.documentElement.dir = lang === 'ar' || lang === 'fa' || lang === 'he' || lang === 'ur' ? 'rtl' : 'ltr';
+    idle(() => {
+      root.querySelectorAll?.(UI_SELECTOR + ',input[placeholder],textarea[placeholder]').forEach(el => applyNode(el, lang));
+      updateFixedLabels(lang);
+      translateUnknownUi(root, lang);
+      translateVisiblePosts(lang);
+    });
+  }
+  function translateUnknownUi(root=document, lang=current()){
+    if(lang === 'en') return;
+    const jobs = [];
+    root.querySelectorAll?.(UI_SELECTOR).forEach(el => {
+      if(el.closest?.(SKIP_SELECTOR) || el.dataset.i18nRemoteDone === lang) return;
+      if(el.childNodes.length !== 1 || el.childNodes[0].nodeType !== 3) return;
+      const src = el.dataset.i18nSourceText || el.textContent;
+      el.dataset.i18nSourceText = src;
+      if(translateLocal(src, lang)) return;
+      const clean = baseText(src);
+      if(clean) jobs.push({el, src, clean});
+    });
+    if(!jobs.length) return;
+    translateBatch(jobs.map(j => j.clean), lang).then(map => {
+      jobs.forEach(j => {
+        const out = map[j.clean];
+        if(out && out !== j.clean) j.el.textContent = String(j.src).replace(j.clean, out);
+        j.el.dataset.i18nRemoteDone = lang;
+      });
+    });
+  }
+  function updateFixedLabels(lang=current()){
+    const navNames = {feed:'Feed',explore:'Explore',earn:'Earn',friends:'Friends',wallet:'Wallet',messages:'Chat',apps:'Apps',nft:'NFT',metaverse:'Meta',stats:'Stats',badges:'Badges',profile:'Me',settings:'Settings'};
+    Object.entries(navNames).forEach(([page,label]) => {
+      const el = document.querySelector(`.bn[data-p="${page}"] .lbl`);
+      if(el) {
+        el.dataset.i18nSourceText = label;
+        el.textContent = translateLocal(label, lang) || label;
+      }
+    });
+    const cur = document.getElementById('curLangLabel');
+    if(cur && typeof LANGUAGES !== 'undefined' && LANGUAGES[lang]) cur.textContent = `${LANGUAGES[lang].flag} ${LANGUAGES[lang].name}`;
+  }
+  function shouldTranslatePosts(){
+    const box = document.getElementById('autoTranslateToggle');
+    return !!box?.checked || !!(window.CU?.privacySettings?.autoTranslate);
+  }
+  function translateVisiblePosts(lang=current()){
+    if(lang === 'en' || !shouldTranslatePosts()) return;
+    const jobs = [];
+    document.querySelectorAll('.post-txt').forEach(el => {
+      if(el.dataset.postLang === lang || el.dataset.translating === '1') return;
+      const src = el.dataset.sourceText || el.textContent.trim();
+      if(!src || src.length > 500) return;
+      el.dataset.sourceText = src;
+      el.dataset.translating = '1';
+      jobs.push({el, src});
+    });
+    if(!jobs.length) return;
+    translateBatch(jobs.map(j => j.src), lang).then(map => {
+      jobs.forEach(({el, src}) => {
+        const out = map[baseText(src)] || src;
+        if(out && out !== src) el.textContent = out;
+        el.dataset.postLang = lang;
+        el.dataset.translating = '0';
+      });
+    }).catch(() => {
+      jobs.forEach(({el}) => { el.dataset.translating = '0'; });
+    });
+  }
+  function setLanguage(code){
+    if(typeof LANGUAGES === 'undefined') return;
+    if(!LANGUAGES[code]) return;
+    window.currentLang = code;
+    try { currentLang = code; } catch(e) {}
+    localStorage.setItem(LANG_KEY, code);
+    applyAll(document, code);
+    if(typeof closeModal === 'function') closeModal('langModal');
+    if(typeof toast === 'function') toast('s', (translateLocal('App Language', code) || 'Language') + ': ' + LANGUAGES[code].name);
+    setTimeout(() => {
+      ['rSettings','rEarn','rWallet','rMessages','rExplore','rAppsPage','rNFTMarketplace','renderBadges'].forEach(fn => {
+        try { if(typeof window[fn] === 'function' && document.querySelector('.pg.on')) applyAll(document.querySelector('.pg.on'), code); } catch(e) {}
+      });
+    }, 80);
+  }
+  function wrapRender(fnName){
+    const old = window[fnName];
+    if(typeof old !== 'function' || old.__i18nWrapped) return;
+    const wrapped = function(){
+      const out = old.apply(this, arguments);
+      idle(() => applyAll(document.querySelector('.pg.on') || document, current()));
+      return out;
+    };
+    wrapped.__i18nWrapped = true;
+    window[fnName] = wrapped;
+  }
+
+  ready(() => {
+    if(typeof LANGUAGES !== 'undefined') Object.assign(LANGUAGES, EXTRA_LANGS);
+    const saved = localStorage.getItem(LANG_KEY);
+    if(saved && typeof LANGUAGES !== 'undefined' && LANGUAGES[saved]) { window.currentLang = saved; try { currentLang = saved; } catch(e) {} }
+    const oldSetLang = window.setLang;
+    window.setLang = function(code){ setLanguage(code); return false; };
+    window.rLangGrid = function(){
+      const grid = document.getElementById('langGrid');
+      if(!grid || typeof LANGUAGES === 'undefined') return;
+      const lang = current();
+      grid.innerHTML = Object.entries(LANGUAGES).map(([code,l]) => `<div class="lang-btn${code===lang?' on':''}" onclick="setLang('${code}')"><span class="lang-flag">${l.flag}</span><span>${l.name}</span></div>`).join('');
+    };
+    window.searchLanguage = function(q){
+      const grid = document.getElementById('langGrid');
+      if(!grid || typeof LANGUAGES === 'undefined') return;
+      const lang = current();
+      const needle = String(q || '').toLowerCase();
+      grid.innerHTML = Object.entries(LANGUAGES).filter(([code,l]) => code.includes(needle) || l.name.toLowerCase().includes(needle)).map(([code,l]) => `<div class="lang-btn${code===lang?' on':''}" onclick="setLang('${code}')"><span class="lang-flag">${l.flag}</span><span>${l.name}</span></div>`).join('');
+    };
+    ['nav','rFeed','rExplore','rEarn','rWallet','rMessages','rSettings','rAppsPage','rNFTMarketplace','renderBadges','profileTab','friendsTab','showPostMenu','openPostDetail'].forEach(wrapRender);
+    const autoBox = document.getElementById('autoTranslateToggle');
+    if(autoBox) autoBox.addEventListener('change', () => {
+      if(window.CU) {
+        CU.privacySettings = CU.privacySettings || {};
+        CU.privacySettings.autoTranslate = autoBox.checked;
+        if(typeof saveData === 'function') saveData();
+      }
+      translateVisiblePosts(current());
+    });
+    const mo = new MutationObserver(records => {
+      if(current() === 'en') return;
+      let root = null;
+      for(const r of records) {
+        if(r.addedNodes?.length) { root = r.target.nodeType === 1 ? r.target : document; break; }
+      }
+      if(root) idle(() => applyAll(root, current()));
+    });
+    mo.observe(document.body, {childList:true, subtree:true});
+    applyAll(document, current());
+    window.mxtApplyLanguage = applyAll;
+  });
+})();
+</script>
+
+<script>
+/* Monetixra safety upgrades: signup ads, click rewards, mobile menus, chat delete */
+(function(){
+  const ready = fn => document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', fn, {once:true}) : fn();
+  const dayKey = () => new Date().toDateString();
+  const isSignupBusy = () => sessionStorage.getItem('mxt_signup_busy') === '1' || sessionStorage.getItem('mxt_otp_busy') === '1';
+  const AD_CAP = {maxPerDay:24, minGapMs:45000};
+
+  function setBtnBusy(btn, busy, text){
+    if(!btn) return;
+    if(busy) {
+      btn.dataset.mxtOldText = btn.textContent || '';
+      btn.disabled = true;
+      btn.style.pointerEvents = 'none';
+      if(text) btn.textContent = text;
+    } else {
+      btn.disabled = false;
+      btn.style.pointerEvents = '';
+      if(btn.dataset.mxtOldText) btn.textContent = btn.dataset.mxtOldText;
+    }
+  }
+
+  function closeBlockingAds(){
+    ['intsAd','autoAd','rwAd','interstitialOverlay'].forEach(id => {
+      const el = document.getElementById(id);
+      if(!el) return;
+      el.classList?.remove('show');
+      if(id === 'interstitialOverlay') el.remove();
+    });
+    document.querySelectorAll('.interstitial-overlay,.ad-notification,.sticky-ad-top,.notification-ad-bar').forEach(el => el.remove());
+  }
+
+  function canShowComfortAd(name){
+    if(name === 'showRewardedAd') return true;
+    let state = {};
+    try { state = JSON.parse(localStorage.getItem('mxt_ad_comfort_state') || '{}') || {}; } catch(e) {}
+    if(state.date !== dayKey()) state = {date:dayKey(), count:0, lastAt:0};
+    const now = Date.now();
+    if((state.count || 0) >= AD_CAP.maxPerDay) return false;
+    if(now - Number(state.lastAt || 0) < AD_CAP.minGapMs) return false;
+    state.count = (state.count || 0) + 1;
+    state.lastAt = now;
+    localStorage.setItem('mxt_ad_comfort_state', JSON.stringify(state));
+    return true;
+  }
+
+  function wrapAdFn(name){
+    const old = window[name];
+    if(typeof old !== 'function' || old.__mxtWrapped) return;
+    const wrapped = function(){
+      if(isSignupBusy()) { closeBlockingAds(); return false; }
+      if(!canShowComfortAd(name)) return false;
+      return old.apply(this, arguments);
+    };
+    wrapped.__mxtWrapped = true;
+    window[name] = wrapped;
+  }
+
+  ['showInts','showAutoAd','tryShowInterstitialAd','tryShowAppOpenAd'].forEach(wrapAdFn);
+
+  const oldOpen = window.open;
+  window.open = function(url, target, features){
+    if(isSignupBusy() && /profitablecpm|highperformanceformat|adsterra|smartlink/i.test(String(url || ''))) return null;
+    return oldOpen ? oldOpen.call(window, url, target, features) : null;
+  };
+
+  const oldSendRegOtp = window.sendRegOtp;
+  if(typeof oldSendRegOtp === 'function') {
+    window.sendRegOtp = async function(){
+      if(sessionStorage.getItem('mxt_otp_busy') === '1') return false;
+      const btn = document.activeElement?.tagName === 'BUTTON' ? document.activeElement : null;
+      sessionStorage.setItem('mxt_otp_busy','1');
+      closeBlockingAds();
+      setBtnBusy(btn, true, 'Sending OTP...');
+      try {
+        return await oldSendRegOtp.apply(this, arguments);
+      } finally {
+        sessionStorage.removeItem('mxt_otp_busy');
+        setBtnBusy(btn, false);
+        closeBlockingAds();
+      }
+    };
+  }
+
+  const oldDoRegister = window.doRegister;
+  if(typeof oldDoRegister === 'function') {
+    window.doRegister = async function(){
+      if(sessionStorage.getItem('mxt_signup_busy') === '1') return false;
+      const btn = document.activeElement?.tagName === 'BUTTON' ? document.activeElement : null;
+      sessionStorage.setItem('mxt_signup_busy','1');
+      closeBlockingAds();
+      setBtnBusy(btn, true, 'Creating...');
+      try {
+        return await oldDoRegister.apply(this, arguments);
+      } finally {
+        sessionStorage.removeItem('mxt_signup_busy');
+        setBtnBusy(btn, false);
+        closeBlockingAds();
+      }
+    };
+  }
+
+  function getRewardState(){
+    const key = 'mxt_click_rewards_' + (window.CU?.id || 'guest');
+    let state = {};
+    try { state = JSON.parse(localStorage.getItem(key) || '{}') || {}; } catch(e) {}
+    if(state.date !== dayKey()) state = {date:dayKey(), count:0, claimed:{}};
+    state.key = key;
+    state.claimed = state.claimed || {};
+    return state;
+  }
+
+  function saveRewardState(state){
+    localStorage.setItem(state.key, JSON.stringify({date:state.date, count:state.count || 0, claimed:state.claimed || {}}));
+  }
+
+  window.mxtClaimClickReward = function(btn, pts, label){
+    if(!window.CU) return typeof toast === 'function' && toast('e','Please login first');
+    const state = getRewardState();
+    const adBox = btn?.closest?.('.ad-container,.ad-native,.task-card,.download-modal,div') || btn?.parentElement;
+    const claimId = btn?.dataset?.rewardId || (label + ':' + pts + ':' + Array.from((adBox || document).querySelectorAll('button')).indexOf(btn));
+    if(state.claimed[claimId]) return typeof toast === 'function' && toast('w','Already claimed');
+    if((state.count || 0) >= 3) {
+      btn.disabled = true;
+      btn.textContent = 'Daily limit';
+      return typeof toast === 'function' && toast('w','Click rewards: 3 times per day');
+    }
+    setBtnBusy(btn, true, 'Ad...');
+    if(typeof showRewardedAd === 'function') {
+      showRewardedAd(() => {});
+    } else if(typeof showInts === 'function') {
+      showInts();
+    }
+    setTimeout(() => {
+      state.count = (state.count || 0) + 1;
+      state.claimed[claimId] = Date.now();
+      saveRewardState(state);
+      if(typeof addPts === 'function') addPts(Number(pts) || 0, label || 'Click Ad', 'earn');
+      if(typeof toast === 'function') toast('s','+' + pts + ' pts added');
+      if(adBox && adBox.classList?.contains('ad-container')) adBox.remove();
+      else if(btn) btn.remove();
+    }, 1200);
+    return false;
+  };
+
+  document.addEventListener('click', function(e){
+    const btn = e.target.closest('button');
+    if(!btn) return;
+    const txt = (btn.textContent || '').trim();
+    const ptsMatch = txt.match(/\+(\d+)\s*pts?/i);
+    const box = btn.closest('.ad-container,.ad-native');
+    if(!ptsMatch || !box || !/click|earn|reward/i.test(box.textContent || '')) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    window.mxtClaimClickReward(btn, Number(ptsMatch[1]), 'Click Ad');
+  }, true);
+
+  const oldShowPostMenu = window.showPostMenu;
+  if(typeof oldShowPostMenu === 'function') {
+    window.showPostMenu = function(pid, anchor){
+      const out = oldShowPostMenu.apply(this, arguments);
+      const menu = document.querySelector('.post-menu-dropdown');
+      if(menu && anchor) {
+        const rect = anchor.getBoundingClientRect();
+        const width = Math.min(260, window.innerWidth - 16);
+        const left = Math.max(8, Math.min(window.innerWidth - width - 8, rect.right - width));
+        const top = Math.min(window.innerHeight - 12, rect.bottom + 6);
+        menu.style.width = width + 'px';
+        menu.style.left = left + 'px';
+        menu.style.right = 'auto';
+        menu.style.top = top + 'px';
+        menu.style.zIndex = '100000';
+        menu.addEventListener('touchstart', ev => ev.stopPropagation(), {passive:true});
+      }
+      return out;
+    };
+  }
+
+  window.deleteChatMessage = function(msgId, everyone=false){
+    if(!window.CU || !window.currentChatId) return;
+    const key = [CU.id,currentChatId].sort().join('_');
+    const msgs = D.chats?.[key] || [];
+    const msg = msgs.find(m => m.id === msgId);
+    if(!msg) return;
+    if(everyone && msg.from === CU.id) {
+      msg.deleted = true;
+      msg.text = 'Message deleted';
+      delete msg.data;
+    } else {
+      msg.hiddenFor = msg.hiddenFor || [];
+      if(!msg.hiddenFor.includes(CU.id)) msg.hiddenFor.push(CU.id);
+    }
+    saveData();
+    renderChatMsgs();
+  };
+
+  const oldRenderChatMsgs = window.renderChatMsgs;
+  if(typeof oldRenderChatMsgs === 'function') {
+    window.renderChatMsgs = function(){
+      oldRenderChatMsgs.apply(this, arguments);
+      const key = window.CU && window.currentChatId ? [CU.id,currentChatId].sort().join('_') : '';
+      const allMsgs = key ? (D.chats?.[key] || []) : [];
+      document.querySelectorAll('#crMsgs .cr-msg').forEach((el, i) => {
+        const msg = allMsgs[i];
+        if(!msg) return;
+        if((msg.hiddenFor || []).includes(CU.id)) {
+          el.remove();
+          return;
+        }
+        if(el.querySelector('.mxt-msg-actions')) return;
+        const mine = msg.from === CU.id;
+        el.querySelector('.cr-bub')?.insertAdjacentHTML('beforeend',
+          `<div class="mxt-msg-actions"><button onclick="deleteChatMessage('${msg.id}',false)">Delete you</button>${mine ? `<button onclick="deleteChatMessage('${msg.id}',true)">Delete everyone</button>` : ''}</div>`);
+      });
+    };
+  }
+
+  ready(() => {
+    document.body.classList.add('mxt-safe-upgrades');
+    closeBlockingAds();
+  });
+})();
+</script>
+
 <style>
 .mxt-feature-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .mxt-feature-grid button{background:var(--g2);border:1px solid var(--b1);color:var(--t1);border-radius:8px;padding:10px 8px;font-size:12px;font-weight:700;text-align:left;cursor:pointer}
 .mxt-feature-grid button:active{transform:scale(.98)}
+.mxt-msg-actions{display:flex;gap:6px;margin-top:6px;opacity:.75}
+.mxt-msg-actions button{border:1px solid var(--b1);background:var(--g2);color:var(--t2);border-radius:6px;padding:3px 6px;font-size:10px;cursor:pointer}
+.mxt-msg-actions button:active{transform:scale(.97)}
 @media (max-width:520px){
   .post{content-visibility:auto;contain-intrinsic-size:520px}
   .mxt-feature-grid{grid-template-columns:1fr}
   #btmNav .bn{min-width:62px}
+  .post-more{min-width:40px;min-height:40px;touch-action:manipulation}
+  .post-menu-dropdown{max-width:calc(100vw - 16px) !important}
 }
 </style>
 </body>

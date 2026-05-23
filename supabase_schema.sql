@@ -126,49 +126,6 @@ create table if not exists public.follows (
   primary key (follower_id, following_id)
 );
 
--- FRIENDS
-create table if not exists public.friends (
-  user_id     text references public.users(id) on delete cascade,
-  friend_id   text references public.users(id) on delete cascade,
-  status      text default 'pending', -- pending, accepted, rejected
-  created_at  timestamptz default now(),
-  updated_at  timestamptz default now(),
-  primary key (user_id, friend_id)
-);
-
--- DAILY POINT EARNING
-create table if not exists public.daily_point_earnings (
-  id          text primary key,
-  user_id     text references public.users(id) on delete cascade,
-  points_earned int default 0,
-  button_type text, -- '+2', '+3', '+5'
-  earned_date date default current_date,
-  click_count int default 0,
-  created_at  timestamptz default now()
-);
-
--- AD VIEWS
-create table if not exists public.ad_views (
-  id          text primary key,
-  user_id     text references public.users(id) on delete cascade,
-  ad_type     text, -- banner, contextual, interstitial
-  ad_content  text,
-  points_awarded int default 0,
-  income_percentage numeric default 0.65, -- 65% by default
-  created_at  timestamptz default now()
-);
-
--- POST ADS
-create table if not exists public.post_ads (
-  id          text primary key,
-  post_id     text references public.posts(id) on delete cascade,
-  ad_content  text,
-  ad_type     text default 'banner',
-  position    int default 0,
-  active      boolean default true,
-  created_at  timestamptz default now()
-);
-
 -- COMMENTS
 create table if not exists public.comments (
   id          text primary key,
@@ -226,13 +183,6 @@ create index if not exists idx_txs_user        on public.transactions(user_id);
 create index if not exists idx_notifs_to       on public.notifications(to_user);
 create index if not exists idx_follows_follower on public.follows(follower_id);
 create index if not exists idx_follows_following on public.follows(following_id);
-create index if not exists idx_friends_user on public.friends(user_id);
-create index if not exists idx_friends_friend on public.friends(friend_id);
-create index if not exists idx_friends_status on public.friends(status);
-create index if not exists idx_daily_points_user on public.daily_point_earnings(user_id);
-create index if not exists idx_daily_points_date on public.daily_point_earnings(earned_date);
-create index if not exists idx_ad_views_user on public.ad_views(user_id);
-create index if not exists idx_post_ads_post on public.post_ads(post_id);
 
 -- Done!
 select 'MediaEarn Supabase Schema Created! ✅' as status;
